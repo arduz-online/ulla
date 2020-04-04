@@ -1,0 +1,14 @@
+# Prior art, attributions
+
+Some of the files of this project are based on released software by Metaverse Holdings Ltd., from now on Decentraland:
+
+1. https://github.com/decentraland/explorer (Apache 2.0)
+2. https://github.com/decentraland/decentraland-rpc (Apache 2.0)
+
+To honor the original licenses, this piece of software are also released under the Apache 2.0 license.
+
+## Modifications on top of the Decentraland's released work
+
+1. Many files dedicated to Decentraland specific logic were removed from the ECS package to make it a generic library.
+2. An executable file from [decentraland-rpc](https://github.com/decentraland/decentraland-rpc) (decentraland-compiler) was moved to its own package inside this repository (ulla-compiler)
+3. Package names were changed to avoid confilcts in package managers

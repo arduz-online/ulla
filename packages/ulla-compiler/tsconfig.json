@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "es2015",
+    "module": "commonjs",
+    "declaration": false,
+    "sourceMap": false,
+    "diagnostics": true,
+    "lib": [
+      "es2015",
+      "es2015.promise",
+      "dom"
+    ]
+  },
+  "include": ["bin.ts"]
+}

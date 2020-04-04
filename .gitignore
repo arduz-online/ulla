@@ -1,0 +1,14 @@
+**/node_modules
+**/*.js
+dist
+types/ulla-ecs.api.json
+temp
+.tsbuildinfo
+packages/ulla-ecs/types/ulla
+
+packages/ulla-ecs/LICENSE
+packages/ulla-ecs/NOTICE
+packages/ulla-compiler/LICENSE
+packages/ulla-compiler/NOTICE
+packages/build-ecs/LICENSE
+packages/build-ecs/NOTICE
