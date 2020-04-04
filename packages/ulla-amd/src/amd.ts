@@ -5,15 +5,13 @@ type ModuleDescriptor = {
 
 type MethodDescriptor = { name: string };
 
-type DecentralandInterface = {
-  loadModule(moduleName: string): PromiseLike<ModuleDescriptor>;
-  callRpc(
-    moduleHandle: string,
-    methodName: string,
-    args: ArrayLike<any>
-  ): PromiseLike<any>;
-  onStart(cb: Function);
-};
+// declare function loadModule(moduleName: string): PromiseLike<ModuleDescriptor>;
+// declare function callRpc(
+//   moduleHandle: string,
+//   methodName: string,
+//   args: ArrayLike<any>
+// ): PromiseLike<any>;
+// declare function onStart(cb: Function);
 
 type Module = {
   name: string;
@@ -22,7 +20,6 @@ type Module = {
   handlers: Function[];
 };
 
-declare var dcl: DecentralandInterface;
 declare var self: any;
 
 namespace loader {
@@ -195,7 +192,7 @@ namespace loader {
 
   function createMethodHandler(rpcHandle: string, method: MethodDescriptor) {
     return function() {
-      return dcl.callRpc(
+      return (global as any).callRpc(
         rpcHandle,
         method.name,
         anonymousQueue.slice.call(arguments, 0)
@@ -223,8 +220,9 @@ namespace loader {
     }
 
     if (moduleName.indexOf("@") === 0) {
-      if (typeof dcl !== "undefined") {
-        dcl.loadModule(moduleName).then((descriptor: ModuleDescriptor) => {
+      (global as any)
+        .loadModule(moduleName)
+        .then((descriptor: ModuleDescriptor) => {
           let createdModule = {};
 
           for (let i in descriptor.methods) {
@@ -237,12 +235,11 @@ namespace loader {
 
           callback(createdModule);
         });
-      }
     }
   }
 
-  if (typeof dcl !== "undefined") {
-    dcl.onStart(() => {
+  if (typeof (global as any).onStart !== "undefined") {
+    (global as any).onStart(() => {
       const notLoadedModules: Module[] = [];
       for (let i in registeredModules) {
         if (

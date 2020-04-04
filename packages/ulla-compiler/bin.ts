@@ -407,7 +407,12 @@ export async function glob(path: string) {
 }
 
 export async function cli(args: string[]) {
-  const files = await glob(process.argv[2]);
+  const expr = process.argv[2]
+  const files = await glob(expr);
+
+  if(!files.length){
+    throw new Error('No files found using expression ' +  expr)
+  }
 
   await Promise.all(files.map($ => processFile({ file: $, outFile: args[3] })));
 }
@@ -455,6 +460,8 @@ export async function processJson(file: string) {
       console.error(`Unknown compilation step ${JSON.stringify($, null, 2)}`);
     }
   }
+
+  console.error(`> Finalizing.`);
 }
 
 cli(process.argv)
