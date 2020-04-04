@@ -4,7 +4,7 @@
     "module": "commonjs",
     "declaration": false,
     "sourceMap": false,
-    "diagnostics": true,
+    "diagnostics": false,
     "lib": [
       "es2015",
       "es2015.promise",
