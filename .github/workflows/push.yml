@@ -13,12 +13,13 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: 10.x
-      - name: install and build
-        run: |
-          make install clean build
-      - name: compile examples
-        run: |
-          make example
+      - name: clean
+        run:  make clean
+      - name: install
+        run:  make install
+      - name: build
+        run:  make build
+      - name: examples & tests
+        run:  make example
       - name: publish
-        run: |
-          make publish
+        run:  make publish
