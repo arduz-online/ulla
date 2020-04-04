@@ -16,7 +16,9 @@ async function injectDependencies(
   dependencies: string[],
   devDependency = false
 ) {
-  console.log(`> update ${folder}/package.json (injecting dependencies)`);
+  console.log(
+    `> update ${folder}/package.json (injecting dependencies & version)`
+  );
   {
     const file = path.resolve(root, `${folder}/package.json`);
     const packageJson = JSON.parse(readFileSync(file).toString());
@@ -53,6 +55,10 @@ async function injectDependencies(
         `Missing dependencies "${Array.from(deps).join('", "')}"`
       );
     }
+
+    packageJson.version = localPackageJson.version;
+    packageJson.license = localPackageJson.license;
+    packageJson.author = localPackageJson.author;
 
     writeFileSync(file, JSON.stringify(packageJson, null, 2));
   }

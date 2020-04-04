@@ -26,6 +26,9 @@
     "docs-yaml",
     "artifacts"
   ],
-  "dependencies": {},
+  "dependencies": {
+    "typescript": "^3.8.3",
+    "uglify-js": "^3.8.1"
+  },
   "devDependencies": {}
 }

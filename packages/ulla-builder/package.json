@@ -11,8 +11,8 @@
   "author": "menduz",
   "license": "Apache 2.0",
   "dependencies": {
-    "typescript": "latest",
-    "uglify-js": "latest"
+    "typescript": "^3.8.3",
+    "uglify-js": "^3.8.1"
   },
   "files": [
     "index.js",

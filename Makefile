@@ -48,12 +48,13 @@ packages/ulla-ecs/types/dist/index.d.ts: $(SOURCE_SUPPORT_TS_FILES) $(ECS_COMPIL
 	@$(TS_NODE) ./scripts/buildEcsTypes.ts
 	@npx prettier --write 'packages/ulla-ecs/types/ulla/index.d.ts'
 
+packages/example/ulla-ecs/artifacts/amd.js: $(AMD_DEP)
+	@ln -sf $(CWD)/packages/ulla-ecs packages/example/node_modules/ulla-ecs
+
 example: build
 	@rm -rf packages/example/node_modules
 	@mkdir packages/example/node_modules || true
-	@ln -sf $(CWD)/packages/ulla-ecs packages/example/node_modules/ulla-ecs
 	@cd packages/example; npm test
-
 
 packages/ulla-amd/dist/amd.js: packages/ulla-amd/src/amd.ts packages/ulla-builder/tsconfig.json
 	@echo "> running for packages/ulla-amd/dist/amd.js"
@@ -62,9 +63,9 @@ packages/ulla-amd/dist/amd.js: packages/ulla-amd/src/amd.ts packages/ulla-builde
 	@cd packages/ulla-amd; $(PWD)/node_modules/.bin/mocha
 
 build: $(BUILD_ECS) $(AMD_DEP) $(COMPILER) $(ECS_COMPILED_FILES_DECL) $(DIST_PACKAGE_JSON) ## Build all the entrypoints and run the `scripts/prepareDist` script
+	@$(TS_NODE) ./scripts/prepareDist.ts
 
 publish: build example ## Release a new version, using the `scripts/npmPublish` script
-	@$(TS_NODE) ./scripts/prepareDist.ts
 	@cd $(PWD)/packages/ulla-ecs; $(TS_NODE) $(PWD)/scripts/npmPublish.ts
 
 .PHONY: clean

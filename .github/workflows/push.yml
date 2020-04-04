@@ -17,9 +17,5 @@ jobs:
         run:  make clean
       - name: install
         run:  make install
-      - name: build
-        run:  make build
-      - name: examples & tests
-        run:  make example
-      - name: publish
+      - name: build & test & publish
         run:  make publish
