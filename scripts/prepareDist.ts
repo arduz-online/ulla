@@ -61,7 +61,7 @@ async function injectDependencies(
 async function prepareDecentralandECS(folder: string) {
   await validatePackage(folder);
   copyFile(
-    require.resolve("dcl-amd"),
+    path.resolve(root, `packages/ulla-amd/dist/amd.js`),
     path.resolve(root, `${folder}/artifacts/amd.js`)
   );
   copyFile(

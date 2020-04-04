@@ -3,8 +3,8 @@
 .SUFFIXES:
 
 NODE = node
-TS_NODE = node_modules/.bin/ts-node
-TSC = node_modules/.bin/tsc
+TS_NODE = $(PWD)/node_modules/.bin/ts-node
+TSC = $(PWD)/node_modules/.bin/tsc
 CWD = $(shell pwd)
 
 COMPILER_FILES = packages/ulla-compiler/bin.js
@@ -13,6 +13,7 @@ ECS_CONFIG_DEPENDENCIES := packages/ulla-ecs/package.json packages/ulla-ecs/tsco
 BUILD_ECS := packages/ulla-builder/index.js
 DIST_PACKAGE_JSON := packages/ulla-ecs/package.json
 ECS_COMPILED_FILES_DECL := packages/ulla-ecs/types/dist/index.d.ts
+AMD_DEP := packages/ulla-amd/dist/amd.js
 
 COMPILER_NPM_DEPENDENCIES := packages/ulla-compiler/package.json packages/ulla-compiler/tsconfig.json packages/ulla-compiler/bin.ts
 
@@ -44,7 +45,13 @@ example: build
 	@ln -sf $(CWD)/packages/ulla-ecs packages/example/node_modules/ulla-ecs
 	@cd packages/example; npm test
 
-build: $(BUILD_ECS) $(COMPILER_FILES) $(ECS_COMPILED_FILES_DECL) $(DIST_PACKAGE_JSON) ## Build all the entrypoints and run the `scripts/prepareDist` script
+
+packages/ulla-amd/dist/amd.js: packages/ulla-amd/src/amd.ts packages/ulla-builder/tsconfig.json
+	@cd packages/ulla-amd; $(TSC) -p tsconfig.json
+	$(PWD)/node_modules/.bin/uglifyjs --mangle --comments some --source-map -o packages/ulla-amd/dist/amd.js packages/ulla-amd/dist/amd.js
+	@cd packages/ulla-amd; $(PWD)/node_modules/.bin/mocha
+
+build: $(BUILD_ECS) $(AMD_DEP) $(COMPILER_FILES) $(ECS_COMPILED_FILES_DECL) $(DIST_PACKAGE_JSON) ## Build all the entrypoints and run the `scripts/prepareDist` script
 
 publish: build example ## Release a new version, using the `scripts/npmPublish` script
 	@$(TS_NODE) ./scripts/prepareDist.ts
@@ -54,6 +61,7 @@ publish: build example ## Release a new version, using the `scripts/npmPublish` 
 
 clean:
 	rm -rf packages/example/node_modules
+	rm -rf packages/ulla-amd/dist
 	rm -rf packages/ulla-ecs/dist
 	rm -rf packages/ulla-ecs/types/dist
 	rm -rf packages/ulla-ecs/temp

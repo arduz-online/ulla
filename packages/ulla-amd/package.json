@@ -1,0 +1,14 @@
+{
+  "name": "ulla-amd",
+  "version": "1.0.5",
+  "description": "",
+  "main": "dist/amd.js",
+  "scripts": {},
+  "keywords": [],
+  "author": "menduz",
+  "files": [
+    "dist"
+  ],
+  "license": "MIT",
+  "devDependencies": {}
+}
