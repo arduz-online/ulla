@@ -31,7 +31,7 @@ packages/ulla-builder/index.js: packages/ulla-builder/index.ts packages/ulla-bui
 	@chmod +x packages/ulla-builder/index.js
 
 packages/ulla-ecs/src/index.js: $(DECENTRALAND_ECS_SOURCES) $(ECS_CONFIG_DEPENDENCIES) $(COMPILER_FILES)
-	@$(COMPILER_FILES) build-recipes/ecs.json
+	@$(COMPILER_FILES) packages/ulla-ecs/build.json
 
 packages/ulla-compiler/bin.js: $(COMPILER_NPM_DEPENDENCIES)
 	@cd packages/ulla-compiler; npm i
@@ -52,7 +52,7 @@ example: build
 
 packages/ulla-amd/dist/amd.js: packages/ulla-amd/src/amd.ts packages/ulla-builder/tsconfig.json
 	@cd packages/ulla-amd; $(TSC) -p tsconfig.json
-	$(PWD)/node_modules/.bin/uglify-js --mangle --comments some --source-map -o packages/ulla-amd/dist/amd.js packages/ulla-amd/dist/amd.js
+	$(PWD)/node_modules/.bin/uglifyjs --mangle --comments some --source-map -o packages/ulla-amd/dist/amd.js packages/ulla-amd/dist/amd.js
 	@cd packages/ulla-amd; $(PWD)/node_modules/.bin/mocha
 
 build: $(BUILD_ECS) $(AMD_DEP) $(COMPILER_FILES) $(ECS_COMPILED_FILES_DECL) $(DIST_PACKAGE_JSON) ## Build all the entrypoints and run the `scripts/prepareDist` script
