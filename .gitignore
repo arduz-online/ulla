@@ -10,5 +10,5 @@ packages/ulla-ecs/LICENSE
 packages/ulla-ecs/NOTICE
 packages/ulla-compiler/LICENSE
 packages/ulla-compiler/NOTICE
-packages/build-ecs/LICENSE
-packages/build-ecs/NOTICE
+packages/ulla-builder/LICENSE
+packages/ulla-builder/NOTICE

@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "outFile": "./index.js"
+  },
+  "include": [
+    "*.ts"
+  ],
+  "extends": "../ulla-ecs/types/tsconfig.json"
+}

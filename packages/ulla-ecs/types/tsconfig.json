@@ -15,7 +15,8 @@
     "noLib": true,
     "allowJs": true,
     "types": [
-      "env"
+      "env",
+      "ulla"
     ],
     "typeRoots": [
       "."

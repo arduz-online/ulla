@@ -65,8 +65,8 @@ async function prepareDecentralandECS(folder: string) {
     path.resolve(root, `${folder}/artifacts/amd.js`)
   );
   copyFile(
-    path.resolve(root, `packages/build-ecs/index.js`),
-    path.resolve(root, `${folder}/artifacts/build-ecs.js`)
+    path.resolve(root, `packages/ulla-builder/index.js`),
+    path.resolve(root, `${folder}/artifacts/ulla-builder.js`)
   );
 }
 
@@ -92,8 +92,8 @@ async function validatePackage(folder: string) {
   await copyFile("LICENSE", "packages/ulla-compiler/LICENSE");
   await copyFile("NOTICE", "packages/ulla-compiler/NOTICE");
 
-  await copyFile("LICENSE", "packages/build-ecs/LICENSE");
-  await copyFile("NOTICE", "packages/build-ecs/NOTICE");
+  await copyFile("LICENSE", "packages/ulla-builder/LICENSE");
+  await copyFile("NOTICE", "packages/ulla-builder/NOTICE");
 
   await injectDependencies(
     "packages/ulla-ecs",
@@ -101,7 +101,7 @@ async function validatePackage(folder: string) {
     false
   );
   await injectDependencies(
-    "packages/build-ecs",
+    "packages/ulla-builder",
     ["typescript", "uglify-js"],
     false
   );

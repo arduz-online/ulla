@@ -10,9 +10,9 @@ const root = path.resolve(__dirname, "../packages/ulla-ecs/");
 
 const original = ensureFileExists(root, "/dist/index.d.ts");
 
-copyFile(original, root + "/types/dist/index.d.ts");
+copyFile(original, root + "/types/ulla/index.d.ts");
 
-const dtsFile = ensureFileExists(root, "/types/dist/index.d.ts");
+const dtsFile = ensureFileExists(root, "/types/ulla/index.d.ts");
 {
   const content = fs.readFileSync(dtsFile).toString();
 

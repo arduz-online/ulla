@@ -5,7 +5,7 @@
   "main": "dist/src/index.js",
   "typings": "dist/index.d.ts",
   "bin": {
-    "build-ecs": "artifacts/build-ecs.js"
+    "ulla-builder": "artifacts/ulla-builder.js"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
