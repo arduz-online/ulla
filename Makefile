@@ -19,6 +19,10 @@ COMPILER_NPM_DEPENDENCIES := packages/ulla-compiler/package.json packages/ulla-c
 
 SOURCE_SUPPORT_TS_FILES := $(wildcard scripts/*.ts)
 
+install:
+	@npm install
+	@cd packages/ulla-compiler; npm install
+
 packages/amd-loader/%.js: packages/amd-loader/%.ts packages/amd-loader/tsconfig.json
 	@$(TSC) --build packages/amd-loader/tsconfig.json
 

@@ -12,3 +12,5 @@ packages/ulla-compiler/LICENSE
 packages/ulla-compiler/NOTICE
 packages/ulla-builder/LICENSE
 packages/ulla-builder/NOTICE
+
+**/*.js.map
