@@ -15,7 +15,7 @@ jobs:
           node-version: 10.x
       - name: install and build
         run: |
-          make install build
+          make install clean build
       - name: compile examples
         run: |
           make example
