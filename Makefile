@@ -3,7 +3,6 @@
 .SUFFIXES:
 
 NODE = node
-TS_NODE = $(PWD)/node_modules/.bin/ts-node
 TSC = $(PWD)/node_modules/.bin/tsc
 CWD = $(shell pwd)
 
@@ -14,14 +13,23 @@ BUILD_ECS := packages/ulla-builder/index.js
 DIST_PACKAGE_JSON := packages/ulla-ecs/package.json
 ECS_COMPILED_FILES_DECL := packages/ulla-ecs/types/dist/index.d.ts
 AMD_DEP := packages/ulla-amd/dist/amd.js
+AMD_EX := packages/example/ulla-ecs/artifacts/amd.js
 
 COMPILER_NPM_DEPENDENCIES := packages/ulla-compiler/package.json packages/ulla-compiler/tsconfig.json packages/ulla-compiler/bin.ts
+
+NPM_PUBLISH_SCRIPT := scripts/npmPublish.js
+BUILD_ECS_SCRIPT := scripts/buildEcsTypes.js
+DIST_SCRIPT := scripts/prepareDist.js
 
 SOURCE_SUPPORT_TS_FILES := $(wildcard scripts/*.ts)
 
 install:
 	@npm install
 	@cd packages/ulla-compiler; npm install
+
+scripts/%.js: scripts/%.ts scripts/tsconfig.json
+	@echo "> running for scripts"
+	@$(TSC) --build scripts/tsconfig.json
 
 packages/amd-loader/%.js: packages/amd-loader/%.ts packages/amd-loader/tsconfig.json
 	@echo "> running for packages/amd-loader"
@@ -42,18 +50,17 @@ packages/ulla-compiler/bin.js: $(COMPILER_NPM_DEPENDENCIES)
 	@$(TSC) --build packages/ulla-compiler/tsconfig.json
 	@cd packages/ulla-compiler; chmod +x bin.js
 
-packages/ulla-ecs/types/dist/index.d.ts: $(SOURCE_SUPPORT_TS_FILES) $(ECS_COMPILED_FILES) $(ECS_CONFIG_DEPENDENCIES)
+packages/ulla-ecs/types/dist/index.d.ts: $(SOURCE_SUPPORT_TS_FILES) $(ECS_COMPILED_FILES) $(ECS_CONFIG_DEPENDENCIES) $(BUILD_ECS_SCRIPT)
 	@echo "> running for packages/ulla-ecs/types/dist/index.d.ts"
 	@cd packages/ulla-ecs; $(PWD)/node_modules/.bin/api-extractor run --typescript-compiler-folder "$(PWD)/node_modules/typescript" --local
-	@$(TS_NODE) ./scripts/buildEcsTypes.ts
+	@$(NODE) ./scripts/buildEcsTypes.js
 	@npx prettier --write 'packages/ulla-ecs/types/ulla/index.d.ts'
 
 packages/example/ulla-ecs/artifacts/amd.js: $(AMD_DEP)
+	@mkdir packages/example/node_modules || true
 	@ln -sf $(CWD)/packages/ulla-ecs packages/example/node_modules/ulla-ecs
 
-example: build
-	@rm -rf packages/example/node_modules
-	@mkdir packages/example/node_modules || true
+example: build $(AMD_EX)
 	@cd packages/example; npm test
 
 packages/ulla-amd/dist/amd.js: packages/ulla-amd/src/amd.ts packages/ulla-builder/tsconfig.json
@@ -62,11 +69,12 @@ packages/ulla-amd/dist/amd.js: packages/ulla-amd/src/amd.ts packages/ulla-builde
 	@$(PWD)/node_modules/.bin/uglifyjs --mangle --comments some --source-map -o packages/ulla-amd/dist/amd.js packages/ulla-amd/dist/amd.js
 	@cd packages/ulla-amd; $(PWD)/node_modules/.bin/mocha
 
-build: $(BUILD_ECS) $(AMD_DEP) $(COMPILER) $(ECS_COMPILED_FILES_DECL) $(DIST_PACKAGE_JSON) ## Build all the entrypoints and run the `scripts/prepareDist` script
-	@$(TS_NODE) ./scripts/prepareDist.ts
+build: $(BUILD_ECS) $(AMD_DEP) $(COMPILER) $(ECS_COMPILED_FILES_DECL) $(DIST_PACKAGE_JSON) $(DIST_SCRIPT) ## Build all the entrypoints and run the `scripts/prepareDist` script
+	@$(NODE) ./scripts/prepareDist.js
 
-publish: build example ## Release a new version, using the `scripts/npmPublish` script
-	@cd $(PWD)/packages/ulla-ecs; $(TS_NODE) $(PWD)/scripts/npmPublish.ts
+publish: clean build example $(NPM_PUBLISH_SCRIPT) ## Release a new version, using the `scripts/npmPublish` script
+	@cd $(PWD)/packages/ulla-ecs; $(NODE) $(PWD)/scripts/npmPublish.js
+	@cd $(PWD)/packages/ulla-compiler; $(NODE) $(PWD)/scripts/npmPublish.js
 
 .PHONY: clean
 
@@ -74,8 +82,8 @@ clean:
 	rm -rf packages/example/node_modules
 	rm -rf packages/ulla-amd/dist
 	rm -rf packages/ulla-ecs/dist
-	rm -rf packages/ulla-ecs/types/dist
 	rm -rf packages/ulla-ecs/temp
+	rm -rf packages/ulla-ecs/types/dist
 	rm -rf packages/ulla-ecs/artifacts
 	rm -rf packages/ulla-ecs/types/ulla
 	rm -rf packages/ulla-builder/index.js

@@ -17,5 +17,7 @@ jobs:
         run:  make clean
       - name: install
         run:  make install
+      - name: npm login
+        run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" > ~/.npmrc
       - name: build & test & publish
         run:  make publish
