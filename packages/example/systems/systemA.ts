@@ -1,16 +1,16 @@
 import { Hola } from "../components/component";
 
 export class SystemA implements ISystem {
-  g: ComponentGroup;
+  g?: ComponentGroup;
 
   activate(engine: Engine) {
-    log("system got activated");
+    log("system a got activated");
     this.g = engine.getComponentGroup(Hola);
   }
 
-  update(dt) {
+  update(dt: number) {
     log("system a update", dt);
-    for (let entity of this.g.entities) {
+    for (let entity of this.g!.entities) {
       log("system a update -> entity", entity.uuid);
     }
   }
@@ -18,9 +18,4 @@ export class SystemA implements ISystem {
   doSomething(x: string){
     log('a->something', x)
   }
-}
-
-let i = 0
-export function getId(): number {
-  return i++
 }

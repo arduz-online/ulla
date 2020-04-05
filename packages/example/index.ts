@@ -17,3 +17,6 @@ systemB.doSomething()
   e.addComponent(new Hola());
   log("test", e.getComponent(Hola).test());
 }
+
+declare var global: any;
+global.onUpdate((dt: number) => engine.update(dt))

@@ -4,7 +4,6 @@
 import * as fs from "fs";
 import * as ts from "typescript";
 import * as terser from "terser";
-import { future } from "fp-future";
 import ivm = require("isolated-vm");
 import { inspect } from "util";
 import { resolve, dirname } from "path";
@@ -129,6 +128,8 @@ async function emitFile(
 ) {
   let output = services.getEmitOutput(fileName);
 
+  if (WATCH) console.log("\u001b[2J\u001b[0;0H");
+
   if (!output.emitSkipped) {
     console.log(
       `> Processing ${fileName.replace(ts.sys.getCurrentDirectory(), "")}`
@@ -232,6 +233,8 @@ async function emitFile(
         .catch(e => {
           console.log("! Validation error: " + e.message);
         });
+
+      await script;
 
       console.log("\nThe compiler is watching file changes...\n");
     } else {
@@ -417,8 +420,6 @@ async function testScript(script: string) {
   // because otherwise `global` would actually be a Reference{} object in the new isolate.
   await jail.set("global", jail.derefInto());
 
-  const didLoad = future<any>();
-
   // We will create a basic `log` function for the new isolate to use.
   const logCallback = function(...args) {
     console.log("VM> ", ...args);
@@ -463,14 +464,6 @@ async function testScript(script: string) {
   await isolate.compileScriptSync(script).run(context);
 
   await context.eval("didStart()");
-
-  setTimeout(() => {
-    didLoad.reject(
-      new Error("The script did not initialize correctly, timeout.")
-      );
-    }, 200);
-
-  await didLoad;
 
   console.log("> Runtime started...");
 

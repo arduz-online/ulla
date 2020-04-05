@@ -1,4 +1,7 @@
-import { getId } from "../systems/systemA";
+let i = 0
+function getId(): number {
+  return i++
+}
 
 @Component("a")
 export class Hola {
