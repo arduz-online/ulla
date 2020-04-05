@@ -40,7 +40,7 @@ packages/ulla-builder/index.js: packages/ulla-builder/index.ts packages/ulla-bui
 	@$(TSC) --build packages/ulla-builder/tsconfig.json
 	@chmod +x packages/ulla-builder/index.js
 
-packages/ulla-ecs/src/index.js: $(DECENTRALAND_ECS_SOURCES) $(ECS_CONFIG_DEPENDENCIES) $(COMPILER)
+packages/ulla-ecs/src/index.js: $(ECS_CONFIG_DEPENDENCIES) $(COMPILER)
 	@echo "> running for packages/ulla-ecs/src/index.js"
 	@$(COMPILER) packages/ulla-ecs/build.json
 
@@ -69,14 +69,18 @@ packages/ulla-amd/dist/amd.js: packages/ulla-amd/src/amd.ts packages/ulla-builde
 	@$(PWD)/node_modules/.bin/uglifyjs --mangle --comments some --source-map -o packages/ulla-amd/dist/amd.js packages/ulla-amd/dist/amd.js
 	@cd packages/ulla-amd; $(PWD)/node_modules/.bin/mocha
 
-build: $(BUILD_ECS) $(AMD_DEP) $(COMPILER) $(ECS_COMPILED_FILES_DECL) $(DIST_PACKAGE_JSON) $(DIST_SCRIPT) ## Build all the entrypoints and run the `scripts/prepareDist` script
+lib: scripts/cleanupLib.js packages/ulla-ecs/tsconfig.json packages/ulla-ecs/package.json
+	@cp node_modules/typescript/lib/lib.es*.d.ts packages/ulla-ecs/types/env
+	@$(NODE) $(PWD)/scripts/cleanupLib.js
+
+build: lib $(BUILD_ECS) $(AMD_DEP) $(COMPILER) $(ECS_COMPILED_FILES_DECL) $(DIST_PACKAGE_JSON) $(DIST_SCRIPT) ## Build all the entrypoints and run the `scripts/prepareDist` script
 	@$(NODE) ./scripts/prepareDist.js
 
 publish: clean build example $(NPM_PUBLISH_SCRIPT) ## Release a new version, using the `scripts/npmPublish` script
 	@cd $(PWD)/packages/ulla-ecs; $(NODE) $(PWD)/scripts/npmPublish.js
 	@cd $(PWD)/packages/ulla-compiler; $(NODE) $(PWD)/scripts/npmPublish.js
 
-.PHONY: clean
+.PHONY: clean lib
 
 clean:
 	rm -rf packages/example/node_modules

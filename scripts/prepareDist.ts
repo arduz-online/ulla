@@ -64,7 +64,7 @@ async function injectDependencies(
   }
 }
 
-async function prepareDecentralandECS(folder: string) {
+async function prepareECS(folder: string) {
   await validatePackage(folder);
   copyFile(
     path.resolve(root, `packages/ulla-amd/dist/amd.js`),
@@ -91,7 +91,7 @@ async function validatePackage(folder: string) {
 
 // tslint:disable-next-line:semicolon
 (async function() {
-  await prepareDecentralandECS("packages/ulla-ecs");
+  await prepareECS("packages/ulla-ecs");
   await copyFile("LICENSE", "packages/ulla-ecs/LICENSE");
   await copyFile("NOTICE", "packages/ulla-ecs/NOTICE");
 

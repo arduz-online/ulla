@@ -7,10 +7,7 @@
   "bin": {
     "ulla-builder": "artifacts/ulla-builder.js"
   },
-  "scripts": {
-    "build": "tsc -p tsconfig.json",
-    "start": "npm run build && tsc -p tsconfig.json --watch"
-  },
+  "scripts": {},
   "keywords": [],
   "tsdoc": {
     "tsdocFlavor": "AEDoc"
@@ -30,5 +27,6 @@
     "typescript": "^3.8.3",
     "uglify-js": "^3.8.1"
   },
-  "devDependencies": {}
+  "devDependencies": {},
+  "commit": "907a4c5c576ce67e5e246521344638a1ec3b1f45"
 }

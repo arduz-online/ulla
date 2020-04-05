@@ -243,16 +243,9 @@ function getConfiguration(
 
   let hasError = false;
 
-  if (tsconfig.options.target !== ts.ScriptTarget.ES5) {
-    console.error(
-      "! Error: tsconfig.json: Decentraland only allows ES5 targets"
-    );
-    hasError = true;
-  }
-
   if (tsconfig.options.module !== ts.ModuleKind.AMD) {
     console.error(
-      "! Error: tsconfig.json: Decentraland only allows AMD modules"
+      "! Error: tsconfig.json: ulla-ecs only allows AMD modules"
     );
     hasError = true;
   }

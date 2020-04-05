@@ -38,7 +38,6 @@
     "types/ulla",
     "etc",
     "temp",
-    "types",
-    "api-docs-review/decentraland-ecs.api.ts"
+    "types"
   ]
 }
