@@ -3,7 +3,7 @@
     "outFile": "./index.js"
   },
   "include": [
-    "*.ts"
+    "*.ts", "systems/system.ts", "components/component.ts"
   ],
   "extends": "../ulla-ecs/types/tsconfig.json"
 }

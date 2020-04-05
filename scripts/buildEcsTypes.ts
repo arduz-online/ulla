@@ -14,9 +14,11 @@ copyFile(original, root + "/types/ulla/index.d.ts");
 
 const dtsFile = ensureFileExists(root, "/types/ulla/index.d.ts");
 {
-  const content = fs.readFileSync(dtsFile).toString();
+  let content = fs.readFileSync(dtsFile).toString();
+  content = content.replace(/^export {\s*}/gm, "");
+  content = content.replace(/^export /gm, "");
 
-  fs.writeFileSync(dtsFile, content.replace(/^export /gm, ""));
+  fs.writeFileSync(dtsFile, content);
 
   if (content.match(/\bimport\b/)) {
     throw new Error(`The file ${dtsFile} contains imports:\n${content}`);

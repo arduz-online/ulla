@@ -153,7 +153,46 @@ describe("simple test with external module that doesnt exist and throw", () => {
     done();
   });
 
-  it("starters must not throw", () => {
+  it("starters must throw", () => {
+    expect(starters.length).toBeGreaterThan(0);
+    expect(() => starters.forEach($ => $())).toThrow();
+  });
+});
+
+describe("test cycles", () => {
+  const starters = [];
+  it("defines global.*", () => {
+    global.onStart = function(cb) {
+      starters.push(cb);
+    };
+
+    var name = require.resolve("../dist/amd");
+    delete require.cache[name];
+    require(name);
+  });
+
+  it("define cycles", () => {
+    global.define("systemA", ["exports", "systems"], (exports, systems) => {
+      exports.systemA = "systemA";
+    });
+    global.define("systemB", ["exports", "systems"], (exports, systems) => {
+      exports.systemB = "systemB";
+    });
+    global.define(
+      "systems",
+      ["exports", "systemA", "systemB"],
+      (exports, systemA, systemB) => {
+        exports.systems = { systemA, systemB };
+      }
+    );
+
+    global.define(["systems"], systems => {
+        expect(systems.systemA).toEqual("systemA");
+        expect(systems.systemB).toEqual("systemB");
+    });
+  });
+
+  it("starters must throw", () => {
     expect(starters.length).toBeGreaterThan(0);
     expect(() => starters.forEach($ => $())).toThrow();
   });

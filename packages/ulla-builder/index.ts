@@ -4,6 +4,8 @@
 import * as fs from "fs";
 import * as ts from "typescript";
 import * as terser from "terser";
+import { future } from "fp-future";
+import ivm = require("isolated-vm");
 import { inspect } from "util";
 import { resolve, dirname } from "path";
 
@@ -15,6 +17,8 @@ const ecsPackage = JSON.parse(
 const packageJson = JSON.parse(loadArtifact("package.json"));
 
 const ecsVersion = ecsPackage.version;
+
+const nameCache = {};
 
 console.log(`> Using ulla-ecs version ${ecsVersion}`);
 
@@ -29,7 +33,10 @@ const watchedFiles = new Set<string>();
 
 type FileMap = ts.MapLike<{ version: number }>;
 
-function compile(cfg: ReturnType<typeof getConfiguration>, watch: boolean) {
+async function compile(
+  cfg: ReturnType<typeof getConfiguration>,
+  watch: boolean
+) {
   console.log("");
 
   if (cfg.fileNames.length === 0) {
@@ -81,7 +88,7 @@ function compile(cfg: ReturnType<typeof getConfiguration>, watch: boolean) {
   }
 
   // First time around, emit all files
-  emitFile(cfg.fileNames[0], services, cfg.libs);
+  await emitFile(cfg.fileNames[0], services, cfg.libs);
 }
 
 function watchFile(
@@ -115,7 +122,7 @@ function watchFile(
   }
 }
 
-function emitFile(
+async function emitFile(
   fileName: string,
   services: ts.LanguageService,
   libs: string[]
@@ -144,31 +151,38 @@ function emitFile(
     process.env.AMD_PATH || "ulla-ecs/artifacts/amd.js"
   );
 
-  const loadedLibs = libs
-    .map(lib => {
-      `/*! ${lib} */;\n${loadArtifact(lib)}\n`;
-    })
-    .join("");
+  const loadedMap = libs.reduce((acc, lib) => {
+    acc[lib] = loadArtifact(lib);
+    return acc;
+  }, {});
 
-  output.outputFiles.forEach(o => {
+  for (let o of output.outputFiles) {
     console.log(
       `> Emitting ${o.name.replace(ts.sys.getCurrentDirectory(), "")}`
     );
 
-    let generatedCode: string = PRODUCTION
-      ? o.text
-      : `eval(${JSON.stringify(o.text)});`;
-
-    let ret =
-      `/*! ulla-amd */;\n${ecsPackageAMD};\n` +
-      `/*! ulla-ecs@${ecsVersion} */;\n${ecsPackageECS};\n` +
-      loadedLibs +
-      `/*! code */;\n${generatedCode}`;
+    let ret = "";
 
     const compiled = terser.minify(
-      { "index.js": ret },
       {
-        mangle: PRODUCTION,
+        "ulla-amd.js": ecsPackageAMD,
+        "ulla-ecs.js": ecsPackageECS,
+        ...loadedMap,
+        "index.js": o.text
+      },
+      {
+        ecma: 2020,
+        warnings: true,
+        nameCache,
+        mangle: PRODUCTION
+          ? {
+              toplevel: false,
+              module: false,
+              keep_classnames: true,
+              keep_fnames: true,
+              reserved: ["global", "define"]
+            }
+          : false,
         compress: PRODUCTION
           ? {
               passes: 2
@@ -178,7 +192,12 @@ function emitFile(
           comments: /^!/,
           beautify: false
         },
-        toplevel: true
+        sourceMap: PRODUCTION
+          ? false
+          : {
+              includeSources: true
+            },
+        toplevel: false
       }
     );
 
@@ -199,16 +218,30 @@ function emitFile(
 
     ensureDirectoriesExist(dirname(o.name));
 
-    fs.writeFileSync(o.name, WATCH || PRODUCTION ? ret : compiled.code, "utf8");
+    fs.writeFileSync(o.name, compiled.code, "utf8");
+
+    console.log("> Validating runtime...");
 
     if (WATCH) {
+      const script = testScript(compiled.code);
+
+      script
+        .then(() => {
+          console.log("> Validation OK");
+        })
+        .catch(e => {
+          console.log("! Validation error: " + e.message);
+        });
+
       console.log("\nThe compiler is watching file changes...\n");
     } else {
       if (compiled.error) {
         throw compiled.error;
       }
+
+      await testScript(compiled.code);
     }
-  });
+  }
 }
 
 function logErrors(fileName: string, services: ts.LanguageService) {
@@ -310,12 +343,6 @@ function getConfiguration(
     process.exit(1);
   }
 
-  if (PRODUCTION) {
-    tsconfig.options.inlineSourceMap = true;
-    tsconfig.options.sourceMap = false;
-    tsconfig.options.removeComments = true;
-  }
-
   return Object.assign(tsconfig, { libs });
 }
 
@@ -342,21 +369,27 @@ function loadArtifact(path: string): string {
       return ts.sys.readFile(path);
     }
 
-    const ecsPackageAMD = "node_modules/" + path;
+    let ecsPackageAMD = "node_modules/" + path;
 
     if (ts.sys.fileExists(ecsPackageAMD)) {
       return ts.sys.readFile(ecsPackageAMD);
     }
 
-    const module = require.resolve(path);
+    ecsPackageAMD = "../node_modules/" + path;
 
-    if (ts.sys.fileExists(module)) {
-      return ts.sys.readFile(module);
+    if (ts.sys.fileExists(ecsPackageAMD)) {
+      return ts.sys.readFile(ecsPackageAMD);
+    }
+
+    ecsPackageAMD = "../../node_modules/" + path;
+
+    if (ts.sys.fileExists(ecsPackageAMD)) {
+      return ts.sys.readFile(ecsPackageAMD);
     }
 
     throw new Error();
   } catch (e) {
-    console.error(`! Error: ${process.cwd() + "/" + path} not found` + e);
+    console.error(`! Error: ${path} not found. ` + e);
     process.exit(2);
   }
 }
@@ -368,5 +401,92 @@ function ensureDirectoriesExist(folder: string) {
   }
 }
 
+const isolate = new ivm.Isolate({ memoryLimit: 128 });
+
+/// test script using an isolated-vm, it should not throw any error
+async function testScript(script: string) {
+  // Create a new context within this isolate. Each context has its own copy of all the builtin
+  // Objects. So for instance if one context does Object.prototype.foo = 1 this would not affect any
+  // other contexts.
+  const context = isolate.createContextSync();
+
+  // Get a Reference{} to the global object within the context.
+  const jail = context.global;
+
+  // This make the global object available in the context as `global`. We use `derefInto()` here
+  // because otherwise `global` would actually be a Reference{} object in the new isolate.
+  await jail.set("global", jail.derefInto());
+
+  const didLoad = future<any>();
+
+  // We will create a basic `log` function for the new isolate to use.
+  const logCallback = function(...args) {
+    console.log("VM> ", ...args);
+  };
+
+  // We will create a basic `log` function for the new isolate to use.
+  const errorCallback = function(...args) {
+    console.log("VM Error> ", ...args);
+  };
+
+  context.evalClosureSync(
+    `
+    let starters = []
+    let ___updaters = []
+
+    global.onStart = function(fn) {
+      starters.push(fn)
+    }
+
+    global.onUpdate = function(fn) {
+      ___updaters.push(fn)
+    }
+
+    global.didStart = function() {
+      starters.forEach($ => $())
+    }
+
+    global.__runUpdaters = function(dt) {
+      ___updaters.forEach($ => $(dt))
+    }
+
+    global._log = function(...args) {
+      $0.applyIgnored(undefined, args, { arguments: { copy: true } });
+    }
+    global._error = function(...args) {
+      $1.applyIgnored(undefined, args, { arguments: { copy: true } });
+    }`,
+    [logCallback, errorCallback],
+    { arguments: { reference: true } }
+  );
+
+  await isolate.compileScriptSync(script).run(context);
+
+  await context.eval("didStart()");
+
+  setTimeout(() => {
+    didLoad.reject(
+      new Error("The script did not initialize correctly, timeout.")
+      );
+    }, 200);
+
+  await didLoad;
+
+  console.log("> Runtime started...");
+
+  console.log("> Running 3 frames...");
+
+  await context.eval("__runUpdaters(0.10)");
+  await context.eval("__runUpdaters(0.11)");
+  await context.eval("__runUpdaters(0.12)");
+
+  console.log("> Done...");
+
+  context.release();
+}
+
 // Start the watcher
-compile(getConfiguration(packageJson), WATCH);
+compile(getConfiguration(packageJson), WATCH).catch(e => {
+  console.error(e);
+  process.exit(1);
+});

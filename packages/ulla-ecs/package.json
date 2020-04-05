@@ -27,6 +27,5 @@
     "typescript": "^3.8.3",
     "terser": "^4.6.10"
   },
-  "devDependencies": {},
-  "commit": "dd355e7c15e175868a5aa7e0a4ba200318394f7d"
+  "devDependencies": {}
 }

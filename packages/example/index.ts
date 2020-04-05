@@ -1,16 +1,19 @@
-const e = new Entity();
+import { Hola } from "./components/component";
+import { systemA, systemB } from "./systems/setup";
 
-const a = new Promise<any>((a, b) => a(b));
+new Promise<any>((a, b) => a(b));
 
-@Component("a")
-class Hola {
-  constructor(public x = 1) {}
+systemA.doSomething('from index')
+systemB.doSomething()
 
-  test() {
-    return this.x;
-  }
+{
+  const e = new Entity();
+  e.addComponent(new Hola());
+  log("test", e.getComponent(Hola).test());
 }
 
-e.addComponent(new Hola)
-
-log('test', e.getComponent(Hola).test());
+{
+  const e = new Entity();
+  e.addComponent(new Hola());
+  log("test", e.getComponent(Hola).test());
+}

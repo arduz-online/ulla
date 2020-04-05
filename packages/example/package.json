@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "../ulla-builder/index.js",
+    "watch": "../ulla-builder/index.js --watch",
     "test-prod": "../ulla-builder/index.js --production"
   },
   "keywords": [],

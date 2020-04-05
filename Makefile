@@ -40,9 +40,18 @@ packages/ulla-builder/index.js: packages/ulla-builder/index.ts packages/ulla-bui
 	@$(TSC) --build packages/ulla-builder/tsconfig.json
 	@chmod +x packages/ulla-builder/index.js
 
-packages/ulla-ecs/src/index.js: $(ECS_CONFIG_DEPENDENCIES) $(COMPILER)
+clean_ulla-ecs:
+	@echo "> cleaning ulla-ecs"
+	@rm -rf packages/ulla-ecs/dist
+	@rm -rf packages/ulla-ecs/temp
+	@rm -rf packages/ulla-ecs/types/dist
+	@rm -rf packages/ulla-ecs/artifacts
+	@rm -rf packages/ulla-ecs/types/ulla
+
+packages/ulla-ecs/src/index.js: clean_ulla-ecs $(ECS_CONFIG_DEPENDENCIES) $(COMPILER)
 	@echo "> running for packages/ulla-ecs/src/index.js"
 	@$(COMPILER) packages/ulla-ecs/build.json
+
 
 packages/ulla-compiler/bin.js: $(COMPILER_NPM_DEPENDENCIES)
 	@echo "> running for packages/ulla-compiler/bin.js"
@@ -60,16 +69,13 @@ packages/example/ulla-ecs/artifacts/amd.js: $(AMD_DEP)
 	@mkdir packages/example/node_modules || true
 	@ln -sf $(CWD)/packages/ulla-ecs packages/example/node_modules/ulla-ecs
 
-example: build $(AMD_EX) scripts/testIsolated.js
+example: build $(AMD_EX)
 	@cd packages/example; npm run test
-	@$(NODE) $(PWD)/scripts/testIsolated.js packages/example/index.js
 	@cd packages/example; npm run test-prod
-	@$(NODE) $(PWD)/scripts/testIsolated.js packages/example/index.js
 
 packages/ulla-amd/dist/amd.js: packages/ulla-amd/src/amd.ts packages/ulla-builder/tsconfig.json
 	@echo "> running for packages/ulla-amd/dist/amd.js"
 	@cd packages/ulla-amd; $(TSC) -p tsconfig.json
-	@$(PWD)/node_modules/.bin/terser --mangle --comments "/^!/" --source-map includeSources -o packages/ulla-amd/dist/amd.js packages/ulla-amd/dist/amd.js
 	@cd packages/ulla-amd; $(PWD)/node_modules/.bin/mocha
 
 lib: scripts/cleanupLib.js packages/ulla-ecs/tsconfig.json packages/ulla-ecs/package.json
@@ -85,13 +91,8 @@ publish: clean build example $(NPM_PUBLISH_SCRIPT) ## Release a new version, usi
 
 .PHONY: clean lib
 
-clean:
+clean: clean_ulla-ecs
 	rm -rf packages/example/node_modules
 	rm -rf packages/ulla-amd/dist
-	rm -rf packages/ulla-ecs/dist
-	rm -rf packages/ulla-ecs/temp
-	rm -rf packages/ulla-ecs/types/dist
-	rm -rf packages/ulla-ecs/artifacts
-	rm -rf packages/ulla-ecs/types/ulla
 	rm -rf packages/ulla-builder/index.js
 	rm -rf packages/ulla-compiler/bin.js

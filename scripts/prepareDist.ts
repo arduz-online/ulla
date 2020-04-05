@@ -3,13 +3,10 @@
 
 import path = require("path");
 import { readFileSync, writeFileSync } from "fs-extra";
-import { execSync } from "child_process";
 import { copyFile } from "./_utils";
 
 const root = path.resolve(__dirname, "..");
-const commitHash = execSync("git rev-parse HEAD")
-  .toString()
-  .trim();
+
 
 async function injectDependencies(
   folder: string,
@@ -65,7 +62,6 @@ async function injectDependencies(
 }
 
 async function prepareECS(folder: string) {
-  await validatePackage(folder);
   copyFile(
     path.resolve(root, `packages/ulla-amd/dist/amd.js`),
     path.resolve(root, `${folder}/artifacts/amd.js`)
@@ -74,19 +70,6 @@ async function prepareECS(folder: string) {
     path.resolve(root, `packages/ulla-builder/index.js`),
     path.resolve(root, `${folder}/artifacts/ulla-builder.js`)
   );
-}
-
-async function validatePackage(folder: string) {
-  console.log(`> update ${folder}/package.json commit`);
-  {
-    const file = path.resolve(root, `${folder}/package.json`);
-    const packageJson = JSON.parse(readFileSync(file).toString());
-
-    packageJson.commit = commitHash;
-
-    console.log(`  commit: ${commitHash}`);
-    writeFileSync(file, JSON.stringify(packageJson, null, 2));
-  }
 }
 
 // tslint:disable-next-line:semicolon
@@ -108,7 +91,7 @@ async function validatePackage(folder: string) {
   );
   await injectDependencies(
     "packages/ulla-builder",
-    ["typescript", "terser"],
+    ["typescript", "terser", "isolated-vm"],
     false
   );
   await injectDependencies("packages/ulla-compiler", ["typescript"], false);
