@@ -22,6 +22,16 @@ type Module = {
 
 declare var self: any;
 
+global = (typeof global !== "undefined"
+  ? global
+  : typeof self !== "undefined"
+  ? self
+  : typeof this !== "undefined"
+  ? this
+  : null) as any;
+
+if (!global) throw new Error("unknown global context");
+
 namespace loader {
   "use strict";
 
@@ -290,17 +300,6 @@ namespace loader {
 
   require.toUrl = toUrl;
 }
-
-global =
-  typeof global !== "undefined"
-    ? global
-    : typeof self !== "undefined"
-    ? self
-    : typeof this !== "undefined"
-    ? this
-    : null;
-
-if (!global) throw new Error("unknown global context");
 
 (global as any).define = loader.define;
 (global as any).dclamd = loader;

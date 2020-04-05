@@ -60,9 +60,11 @@ packages/example/ulla-ecs/artifacts/amd.js: $(AMD_DEP)
 	@mkdir packages/example/node_modules || true
 	@ln -sf $(CWD)/packages/ulla-ecs packages/example/node_modules/ulla-ecs
 
-example: build $(AMD_EX)
+example: build $(AMD_EX) scripts/testIsolated.js
 	@cd packages/example; npm run test
+	@$(NODE) $(PWD)/scripts/testIsolated.js packages/example/index.js
 	@cd packages/example; npm run test-prod
+	@$(NODE) $(PWD)/scripts/testIsolated.js packages/example/index.js
 
 packages/ulla-amd/dist/amd.js: packages/ulla-amd/src/amd.ts packages/ulla-builder/tsconfig.json
 	@echo "> running for packages/ulla-amd/dist/amd.js"

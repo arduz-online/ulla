@@ -160,22 +160,27 @@ function emitFile(
       : `eval(${JSON.stringify(o.text)});`;
 
     let ret =
-      `/*! ulla-ecs@${ecsVersion} */;\n${ecsPackageECS};\n` +
       `/*! ulla-amd */;\n${ecsPackageAMD};\n` +
+      `/*! ulla-ecs@${ecsVersion} */;\n${ecsPackageECS};\n` +
       loadedLibs +
       `/*! code */;\n${generatedCode}`;
 
-    const compiled = terser.minify(ret, {
-      mangle: PRODUCTION
-        ? {
-            reserved: ["global"]
-          }
-        : false,
-      compress: PRODUCTION,
-      output: {
-        comments: /^!/
+    const compiled = terser.minify(
+      { "index.js": ret },
+      {
+        mangle: PRODUCTION,
+        compress: PRODUCTION
+          ? {
+              passes: 2
+            }
+          : false,
+        output: {
+          comments: /^!/,
+          beautify: false
+        },
+        toplevel: true
       }
-    });
+    );
 
     if (compiled.warnings) {
       for (let warning of compiled.warnings) {
@@ -244,9 +249,7 @@ function getConfiguration(
   let hasError = false;
 
   if (tsconfig.options.module !== ts.ModuleKind.AMD) {
-    console.error(
-      "! Error: tsconfig.json: ulla-ecs only allows AMD modules"
-    );
+    console.error("! Error: tsconfig.json: ulla-ecs only allows AMD modules");
     hasError = true;
   }
 
@@ -308,7 +311,7 @@ function getConfiguration(
   }
 
   if (PRODUCTION) {
-    tsconfig.options.inlineSourceMap = false;
+    tsconfig.options.inlineSourceMap = true;
     tsconfig.options.sourceMap = false;
     tsconfig.options.removeComments = true;
   }

@@ -1,7 +1,6 @@
-let lastGeneratedId = 0
+let lastGeneratedId = 0;
 
-declare var console: any
-declare var dcl: any
+declare var console: any;
 
 /**
  * Log function. Only works in debug mode, otherwise it does nothing.
@@ -9,11 +8,11 @@ declare var dcl: any
  * @public
  */
 export function log(...args: any[]) {
-  if (typeof dcl !== 'undefined') {
-    dcl.log(...args)
+  if (typeof (global as any)._log !== "undefined") {
+    (global as any)._log(...args);
   } else {
     // tslint:disable-next-line:no-console
-    console.log('DEBUG:', ...args)
+    console.log("DEBUG:", ...args);
   }
 }
 
@@ -24,11 +23,11 @@ export function log(...args: any[]) {
  * @public
  */
 export function error(error: string | Error, data?: any) {
-  if (typeof dcl !== 'undefined') {
-    dcl.error(error, data)
+  if (typeof (global as any)._error !== "undefined") {
+    (global as any)._error(error, data);
   } else {
     // tslint:disable-next-line:no-console
-    console.error('ERROR:', error, data)
+    console.error("ERROR:", error, data);
   }
 }
 
@@ -37,20 +36,21 @@ export function error(error: string | Error, data?: any) {
  * @beta
  */
 export function newId(type: string) {
-  lastGeneratedId++
-  if (type.length === 0) throw new Error('newId(type: string): type cannot be empty')
-  return type + lastGeneratedId.toString(36)
+  lastGeneratedId++;
+  if (type.length === 0)
+    throw new Error("newId(type: string): type cannot be empty");
+  return type + lastGeneratedId.toString(36);
 }
 
 /**
  * @internal
  */
 export function uuid() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    let r = (Math.random() * 16) | 0
-    let v = c === 'x' ? r : (r & 0x3) | 0x8
-    return v.toString(16)
-  })
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
+    let r = (Math.random() * 16) | 0;
+    let v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
 }
 
 /**
@@ -61,9 +61,9 @@ export function uuid() {
  * @internal
  */
 export function buildArray<T>(size: number, itemBuilder: () => T): Array<T> {
-  const a: T[] = []
+  const a: T[] = [];
   for (let i = 0; i < size; ++i) {
-    a.push(itemBuilder())
+    a.push(itemBuilder());
   }
-  return a
+  return a;
 }
