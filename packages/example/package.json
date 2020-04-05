@@ -4,7 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "../ulla-builder/index.js"
+    "test": "../ulla-builder/index.js",
+    "test-prod": "../ulla-builder/index.js --production"
   },
   "keywords": [],
   "author": "",

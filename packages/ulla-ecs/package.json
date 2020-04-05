@@ -25,8 +25,8 @@
   ],
   "dependencies": {
     "typescript": "^3.8.3",
-    "uglify-js": "^3.8.1"
+    "terser": "^4.6.10"
   },
   "devDependencies": {},
-  "commit": "907a4c5c576ce67e5e246521344638a1ec3b1f45"
+  "commit": "18f1576a5e013d771c53eafaf99535ffbac4630e"
 }

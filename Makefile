@@ -61,12 +61,13 @@ packages/example/ulla-ecs/artifacts/amd.js: $(AMD_DEP)
 	@ln -sf $(CWD)/packages/ulla-ecs packages/example/node_modules/ulla-ecs
 
 example: build $(AMD_EX)
-	@cd packages/example; npm test
+	@cd packages/example; npm run test
+	@cd packages/example; npm run test-prod
 
 packages/ulla-amd/dist/amd.js: packages/ulla-amd/src/amd.ts packages/ulla-builder/tsconfig.json
 	@echo "> running for packages/ulla-amd/dist/amd.js"
 	@cd packages/ulla-amd; $(TSC) -p tsconfig.json
-	@$(PWD)/node_modules/.bin/uglifyjs --mangle --comments some --source-map -o packages/ulla-amd/dist/amd.js packages/ulla-amd/dist/amd.js
+	@$(PWD)/node_modules/.bin/terser --mangle --comments "/^!/" --source-map includeSources -o packages/ulla-amd/dist/amd.js packages/ulla-amd/dist/amd.js
 	@cd packages/ulla-amd; $(PWD)/node_modules/.bin/mocha
 
 lib: scripts/cleanupLib.js packages/ulla-ecs/tsconfig.json packages/ulla-ecs/package.json

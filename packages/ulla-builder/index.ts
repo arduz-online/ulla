@@ -3,7 +3,7 @@
 // tslint:disable:no-console
 import * as fs from "fs";
 import * as ts from "typescript";
-import * as uglify from "uglify-js";
+import * as terser from "terser";
 import { inspect } from "util";
 import { resolve, dirname } from "path";
 
@@ -165,10 +165,10 @@ function emitFile(
       loadedLibs +
       `/*! code */;\n${generatedCode}`;
 
-    const compiled = uglify.minify(ret, {
+    const compiled = terser.minify(ret, {
       mangle: PRODUCTION
         ? {
-            reserved: ["dcl"]
+            reserved: ["global"]
           }
         : false,
       compress: PRODUCTION,

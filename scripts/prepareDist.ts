@@ -103,12 +103,12 @@ async function validatePackage(folder: string) {
 
   await injectDependencies(
     "packages/ulla-ecs",
-    ["typescript", "uglify-js"],
+    ["typescript", "terser"],
     false
   );
   await injectDependencies(
     "packages/ulla-builder",
-    ["typescript", "uglify-js"],
+    ["typescript", "terser"],
     false
   );
   await injectDependencies("packages/ulla-compiler", ["typescript"], false);
