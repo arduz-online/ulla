@@ -1,0 +1,21 @@
+{
+  "name": "ulla-rpc",
+  "version": "1.0.0",
+  "description": "RPC Library for ulla",
+  "main": "lib/client/index.js",
+  "typings": "lib/client/index.d.ts",
+  "scripts": {},
+  "private": false,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/menduz/ulla.git"
+  },
+  "keywords": [],
+  "author": "menduz",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/menduz/ulla/issues"
+  },
+  "homepage": "https://github.com/menduz/ulla#readme",
+  "dependencies": {}
+}

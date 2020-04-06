@@ -1,0 +1,46 @@
+[
+  {
+    "name": "Delete lib folder",
+    "kind": "RM",
+    "path": "./packages/ulla-rpc/lib"
+  },
+  {
+    "name": "Delete out folder",
+    "kind": "RM",
+    "path": "./packages/ulla-rpc/test/out"
+  },
+  {
+    "name": "Scripting host & common files",
+    "kind": "TSC",
+    "config": "./packages/ulla-rpc/src/tsconfig.json"
+  },
+  {
+    "name": "Scripting client files",
+    "kind": "TSC",
+    "config": "./packages/ulla-rpc/src/client/tsconfig.json"
+  },
+  {
+    "name": "WS Server",
+    "kind": "TSC",
+    "config": "./packages/ulla-rpc/test/server/tsconfig.json"
+  },
+  {
+    "name": "Compile test web workers",
+    "kind": "Webpack",
+    "file": "./packages/ulla-rpc/test/fixtures/*.ts",
+    "target": "webworker"
+  },
+  {
+    "name": "Compile test files",
+    "kind": "Webpack",
+    "file": "./packages/ulla-rpc/test/fixtures/**/*.test.ts",
+    "target": "webworker"
+  },
+  {
+    "name": "Compile tests web workers",
+    "kind": "Webpack",
+    "file": "./packages/ulla-rpc/test/scenarios/index.ts",
+    "target": "web",
+    "coverage": true
+  }
+]

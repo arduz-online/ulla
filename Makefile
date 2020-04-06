@@ -14,6 +14,7 @@ DIST_PACKAGE_JSON := packages/ulla-ecs/package.json
 ECS_COMPILED_FILES_DECL := packages/ulla-ecs/types/dist/index.d.ts
 AMD_DEP := packages/ulla-amd/dist/amd.js
 AMD_EX := packages/example/ulla-ecs/artifacts/amd.js
+RPC_DEPS := packages/ulla-rpc/lib/client/index.js
 
 COMPILER_NPM_DEPENDENCIES := packages/ulla-compiler/package.json packages/ulla-compiler/tsconfig.json packages/ulla-compiler/bin.ts
 
@@ -78,6 +79,11 @@ packages/ulla-amd/dist/amd.js: packages/ulla-amd/src/amd.ts packages/ulla-builde
 	@cd packages/ulla-amd; $(TSC) -p tsconfig.json
 	@cd packages/ulla-amd; $(PWD)/node_modules/.bin/mocha
 
+packages/ulla-rpc/lib/client/index.js: $(COMPILER) scripts/testRpc.js
+	@$(COMPILER) packages/ulla-rpc/build.json
+	@$(NODE) $(PWD)/scripts/testRpc.js
+	@$(PWD)/node_modules/.bin/mocha packages/ulla-rpc/test/out/fixtures/**/*.test.js
+
 lib: scripts/cleanupLib.js packages/ulla-ecs/tsconfig.json packages/ulla-ecs/package.json
 	@cp node_modules/typescript/lib/lib.es*.d.ts packages/ulla-ecs/types/env
 	@$(NODE) $(PWD)/scripts/cleanupLib.js
@@ -88,11 +94,13 @@ build: lib $(BUILD_ECS) $(AMD_DEP) $(COMPILER) $(ECS_COMPILED_FILES_DECL) $(DIST
 publish: clean build example $(NPM_PUBLISH_SCRIPT) ## Release a new version, using the `scripts/npmPublish` script
 	@cd $(PWD)/packages/ulla-ecs; $(NODE) $(PWD)/scripts/npmPublish.js
 	@cd $(PWD)/packages/ulla-compiler; $(NODE) $(PWD)/scripts/npmPublish.js
+	# @cd $(PWD)/packages/ulla-rpc; $(NODE) $(PWD)/scripts/npmPublish.js
 
 .PHONY: clean lib
 
 clean: clean_ulla-ecs
 	rm -rf packages/example/node_modules
+	rm -rf packages/ulla-rpc/lib
 	rm -rf packages/ulla-amd/dist
 	rm -rf packages/ulla-builder/index.js
 	rm -rf packages/ulla-compiler/bin.js

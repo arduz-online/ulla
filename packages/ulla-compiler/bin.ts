@@ -10,6 +10,7 @@ import * as fs from "fs";
 import { resolve, parse as parsePath, dirname, basename, relative } from "path";
 const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
 import { spawn } from "child_process";
+// import { tmpdir } from "os";
 import ProgressBar = require("progress");
 import * as chalk from "chalk";
 
@@ -22,6 +23,17 @@ const instrumentCoverage =
   process.env.NODE_ENV === "coverage";
 const isProduction =
   process.env.NODE_ENV !== "development" && !isWatching && !instrumentCoverage;
+
+// const webWorkerTransport = resolve(__dirname, '../lib/common/transports/WebWorker')
+
+// const entryPointWebWorker = (filename: string) => `
+//   import { WebWorkerTransport } from ${JSON.stringify(webWorkerTransport)}
+//   const imported = require(${JSON.stringify(filename)})
+
+//   if (imported && imported.__esModule && imported['default']) {
+//     new imported['default'](WebWorkerTransport(self))
+//   }
+// `
 
 console.log("ulla-compiler version: " + chalk.green(packageJson.version));
 
@@ -90,6 +102,14 @@ export async function compile(opt: ICompilerOptions) {
     let entry: webpack.Entry | string[] = opt.files;
 
     const extensions = [".ts", ".tsx", ".js", ".json"];
+
+    // if (opt.target === 'webworker') {
+    //   entry = entry.map($ => {
+    //     const file = resolve(tmpdir(), Math.random().toString() + '.WebWorker.js')
+    //     fs.writeFileSync(file, entryPointWebWorker($))
+    //     return file
+    //   })
+    // }
 
     entry = entry.reduce((obj, $, $$) => {
       let name = relative(opt.rootFolder, opt.files[$$]);
