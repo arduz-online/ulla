@@ -88,7 +88,7 @@ lib: scripts/cleanupLib.js packages/ulla-ecs/tsconfig.json packages/ulla-ecs/pac
 	@cp node_modules/typescript/lib/lib.es*.d.ts packages/ulla-ecs/types/env
 	@$(NODE) $(PWD)/scripts/cleanupLib.js
 
-build: lib $(BUILD_ECS) $(AMD_DEP) $(COMPILER) $(ECS_COMPILED_FILES_DECL) $(DIST_PACKAGE_JSON) $(DIST_SCRIPT) ## Build all the entrypoints and run the `scripts/prepareDist` script
+build: lib $(BUILD_ECS) $(RPC_DEPS) $(AMD_DEP) $(COMPILER) $(ECS_COMPILED_FILES_DECL) $(DIST_PACKAGE_JSON) $(DIST_SCRIPT) ## Build all the entrypoints and run the `scripts/prepareDist` script
 	@$(NODE) ./scripts/prepareDist.js
 
 publish: clean build example $(NPM_PUBLISH_SCRIPT) ## Release a new version, using the `scripts/npmPublish` script
