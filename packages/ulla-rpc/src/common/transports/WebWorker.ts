@@ -1,4 +1,4 @@
-import { ScriptingTransport } from '../json-rpc/types'
+import { RpcTransport } from '../json-rpc/types'
 
 export interface IWorker {
   terminate?(): void
@@ -7,8 +7,8 @@ export interface IWorker {
   addEventListener(type: 'message' | 'error', listener: Function, options?: any): void
 }
 
-export function WebWorkerTransport(worker: IWorker): ScriptingTransport {
-  const api: ScriptingTransport = {
+export function WebWorkerTransport(worker: IWorker): RpcTransport {
+  const api: RpcTransport = {
     onConnect(handler) {
       worker.addEventListener('message', () => handler(), { once: true })
     },

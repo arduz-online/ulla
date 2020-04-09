@@ -1,23 +1,18 @@
-import { registerAPI, API, APIOptions, exposeMethod } from '../../lib/host'
+import { registerModule, ExposableModule, exposeProcedure } from '../../lib/host'
 import { testInWorker } from './support/Helpers'
 
-@registerAPI('Greeter')
-export class Greeter extends API {
+@registerModule('Greeter')
+export class Greeter extends ExposableModule {
   greet(name: string) {
     return `Hello ${name}`
   }
 }
 
-@registerAPI('Instancer')
-export class Instancer extends API {
-  private Greeter: Greeter
+@registerModule('Instancer')
+export class Instancer extends ExposableModule {
+  private Greeter: Greeter = this.options.getExposedModuleInstance(Greeter)
 
-  constructor(options: APIOptions) {
-    super(options)
-    this.Greeter = this.options.getAPIInstance(Greeter)
-  }
-
-  @exposeMethod
+  @exposeProcedure
   async doSomething() {
     return this.Greeter.greet('World')
   }

@@ -1,8 +1,8 @@
 import { testToFail } from './support/ClientHelpers'
 import { Methods } from './support/ClientCommons'
 
-testToFail(async ScriptingClient => {
-  const { Methods } = (await ScriptingClient.loadAPIs(['Methods'])) as {
+testToFail(async rpcClient => {
+  const { Methods } = (await rpcClient.loadModules(['Methods'])) as {
     Methods: Methods
   }
 

@@ -1,7 +1,7 @@
 import * as assert from 'assert'
 import { shouldFail, TestableScript } from './support/ClientHelpers'
 import { Methods } from './support/ClientCommons'
-import { inject, getInjectedAPIs, WebWorkerTransport } from '../../lib/client/index'
+import { inject, getInjectedModules, WebWorkerTransport } from '../../lib/client/index'
 
 export class BaseTestMethods extends TestableScript {
   @inject('Methods') m: Methods | null = null
@@ -17,7 +17,7 @@ export default class TestMethods extends BaseTestMethods {
   @inject('Test') xxx: any = null
 
   async doTest() {
-    assert.deepEqual(Array.from(getInjectedAPIs(this)), [
+    assert.deepEqual(Array.from(getInjectedModules(this)), [
       ['Logger', 'Logger'],
       ['testComponent', 'Test'],
       ['xxx', 'Test'],

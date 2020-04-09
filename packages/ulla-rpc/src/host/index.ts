@@ -1,2 +1,2 @@
-export * from './API'
-export * from './ScriptingHost'
+export * from './ExposableModule'
+export * from './RpcHost'

@@ -2,8 +2,8 @@ import * as assert from 'assert'
 import { test, shouldFail } from './support/ClientHelpers'
 import { Methods } from './support/ClientCommons'
 
-test(async ScriptingClient => {
-  const { Methods } = (await ScriptingClient.loadAPIs(['Methods'])) as {
+test(async rpcClient => {
+  const { Methods } = (await rpcClient.loadModules(['Methods'])) as {
     Methods: Methods
   }
 

@@ -1,11 +1,11 @@
 import { EventDispatcher, EventDispatcherBinding } from '../common/core/EventDispatcher'
-import { ISubscribableAPI } from '../host/API'
+import { ISubscribableModule } from '../host/ExposableModule'
 
 export class EventSubscriber extends EventDispatcher {
-  constructor(private component: ISubscribableAPI) {
+  constructor(private module: ISubscribableModule) {
     super()
 
-    component.onSubscribedEvent((data: any) => {
+    module.onSubscribedEvent((data: any) => {
       super.emit(data.event, data)
     })
   }
@@ -19,7 +19,7 @@ export class EventSubscriber extends EventDispatcher {
   on(event: string, callback: any, once?: boolean): EventDispatcherBinding
   on(event: string, handler: any) {
     if (this.getEventBindings(event).length === 0) {
-      this.component.subscribe(event).catch(e => this.emit('error', e))
+      this.module.subscribe(event).catch(e => this.emit('error', e))
     }
     return super.on.apply(this, arguments as any)
   }
@@ -41,10 +41,10 @@ export class EventSubscriber extends EventDispatcher {
 
     if (theEventToValidate !== null) {
       if (this.getEventBindings(theEventToValidate).length === 0) {
-        // If we are removing the last event listener, remove it also from the component
-        // this will keep listeners unrelated to the component intact
+        // If we are removing the last event listener, remove it also from the module
+        // this will keep listeners unrelated to the module intact
 
-        this.component.unsubscribe(theEventToValidate).catch(e => this.emit('error', e))
+        this.module.unsubscribe(theEventToValidate).catch(e => this.emit('error', e))
       }
     }
 

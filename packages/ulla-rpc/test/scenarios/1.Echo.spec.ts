@@ -1,12 +1,12 @@
 /// <reference path="../../../../node_modules/@types/mocha/index.d.ts" />
 
-import { ScriptingHost } from '../../lib/host'
+import { RpcHost } from '../../lib/host'
 import * as assert from 'assert'
 import { future } from './support/Helpers'
 import { WebWorkerTransport } from '../../lib/client'
 
 it('test/out/fixtures/1.Echo.js', async () => {
-  const worker = await ScriptingHost.fromTransport(WebWorkerTransport(new Worker('test/out/fixtures/1.Echo.js')))
+  const worker = await RpcHost.fromTransport(WebWorkerTransport(new Worker('test/out/fixtures/1.Echo.js')))
 
   const randomNumber = Math.random()
   const aFuture = future()

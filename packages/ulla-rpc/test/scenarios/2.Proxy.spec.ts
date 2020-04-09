@@ -1,13 +1,13 @@
 /// <reference path="../../../../node_modules/@types/mocha/index.d.ts" />
 
-import { ScriptingHost } from '../../lib/host'
+import { RpcHost } from '../../lib/host'
 import * as assert from 'assert'
 import { future } from './support/Helpers'
 import { Test } from './support/Commons'
 import { WebWorkerTransport } from '../../lib/client'
 
 it('test/out/fixtures/2.Proxy.js', async () => {
-  const worker = await ScriptingHost.fromTransport(WebWorkerTransport(new Worker('test/out/fixtures/2.Proxy.js')))
+  const worker = await RpcHost.fromTransport(WebWorkerTransport(new Worker('test/out/fixtures/2.Proxy.js')))
 
   let aFuture = future()
 
@@ -40,7 +40,7 @@ it('test/out/fixtures/2.Proxy.js', async () => {
 
   assert.equal(await aFuture, 333, 'Did stop should have been called.')
 
-  const TestPlugin = worker.getAPIInstance(Test)
+  const TestPlugin = worker.getExposedModuleInstance(Test)
 
   if (!TestPlugin) throw new Error('Cannot retieve Test plugin instance')
 

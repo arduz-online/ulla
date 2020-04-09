@@ -1,146 +1,160 @@
-import { registerAPI, API, exposeMethod, ScriptingHost } from '../../../lib/host'
-import { future } from './Helpers'
-import './MessageBusManager'
+import {
+  ExposableModule,
+  exposeProcedure,
+  registerModule,
+  RpcHost
+} from "../../../lib/host";
+import { future } from "./Helpers";
+import "./MessageBusManager";
 
-@registerAPI('Logger')
-export class Logger extends API {
-  @exposeMethod
+@registerModule("Logger")
+export class Logger extends ExposableModule {
+  @exposeProcedure
   async error(message: string) {
-    console.error.call(console, message)
+    console.error.call(console, message);
   }
 
-  @exposeMethod
+  @exposeProcedure
   async log(message: string) {
-    console.log.call(console, message)
+    console.log.call(console, message);
   }
 
-  @exposeMethod
+  @exposeProcedure
   async warn(message: string) {
-    console.warn.call(console, message)
+    console.warn.call(console, message);
   }
 
-  @exposeMethod
+  @exposeProcedure
   async info(message: string) {
-    console.info.call(console, message)
+    console.info.call(console, message);
   }
 }
 
-@registerAPI('Methods')
-export class Methods extends API {
-  store: { [key: string]: any } = {}
+@registerModule("Methods")
+export class Methods extends ExposableModule {
+  store: { [key: string]: any } = {};
 
-  @exposeMethod
+  @exposeProcedure
   async setValue(key: string, value: any) {
-    this.store[key] = value
+    this.store[key] = value;
   }
 
-  @exposeMethod
+  @exposeProcedure
   async getValue(key: string) {
-    return this.store[key]
+    return this.store[key];
   }
 
-  @exposeMethod
+  @exposeProcedure
   async bounce(...args: any[]) {
-    return args
+    return args;
   }
 
-  @exposeMethod
+  @exposeProcedure
   async enable() {
-    return 1
+    return 1;
   }
 
-  @exposeMethod
+  @exposeProcedure
   async singleBounce(arg: any) {
-    return arg
+    return arg;
   }
 
-  @exposeMethod
+  @exposeProcedure
   async ret0() {
-    return 0
+    return 0;
   }
 
-  @exposeMethod
+  @exposeProcedure
   async retNull() {
-    return null
+    return null;
   }
 
-  @exposeMethod
+  @exposeProcedure
   async retFalse() {
-    return false
+    return false;
   }
 
-  @exposeMethod
+  @exposeProcedure
   async retTrue() {
-    return true
+    return true;
   }
 
-  @exposeMethod
+  @exposeProcedure
   async retEmptyStr() {
-    return ''
+    return "";
   }
 
-  @exposeMethod
+  @exposeProcedure
   async getRandomNumber() {
-    return Math.random()
+    return Math.random();
   }
 
-  @exposeMethod
+  @exposeProcedure
   async fail() {
-    throw new Error('A message')
+    throw new Error("A message");
   }
 
-  @exposeMethod
+  @exposeProcedure
   async receiveObject(obj: any) {
-    if (typeof obj !== 'object') {
-      throw new Error('Did not receive an object')
+    if (typeof obj !== "object") {
+      throw new Error("Did not receive an object");
     }
-    return { received: obj }
+    return { received: obj };
   }
 
-  @exposeMethod
+  @exposeProcedure
   async failsWithoutParams() {
     if (arguments.length !== 1) {
-      throw new Error(`Did not receive an argument. got: ${JSON.stringify(arguments)}`)
+      throw new Error(
+        `Did not receive an argument. got: ${JSON.stringify(arguments)}`
+      );
     }
-    return { args: arguments }
+    return { args: arguments };
   }
 
-  @exposeMethod
+  @exposeProcedure
   async failsWithParams() {
     if (arguments.length !== 0) {
-      throw new Error(`Did receive arguments. got: ${JSON.stringify(arguments)}`)
+      throw new Error(
+        `Did receive arguments. got: ${JSON.stringify(arguments)}`
+      );
     }
-    return { args: arguments }
+    return { args: arguments };
   }
 }
 
-@registerAPI('Test')
-export class Test extends API {
-  future = future<{ pass: boolean; arg: any }>()
+@registerModule("Test")
+export class Test extends ExposableModule {
+  future = future<{ pass: boolean; arg: any }>();
 
   async waitForPass() {
-    const result = await this.future
+    const result = await this.future;
 
     if (!result.pass) {
-      throw Object.assign(new Error('WebWorker test failed. The worker did not report error data.'), result.arg || {})
+      throw Object.assign(
+        new Error(
+          "WebWorker test failed. The worker did not report error data."
+        ),
+        result.arg || {}
+      );
     }
 
-    return result.arg
+    return result.arg;
   }
 
-  @exposeMethod
+  @exposeProcedure
   async fail(arg: any) {
-    this.future.resolve({ pass: false, arg })
+    this.future.resolve({ pass: false, arg });
   }
 
-  @exposeMethod
+  @exposeProcedure
   async pass(arg: any) {
-    this.future.resolve({ pass: true, arg })
+    this.future.resolve({ pass: true, arg });
   }
 }
 
-export function setUpPlugins(worker: ScriptingHost) {
-  worker.getAPIInstance(Logger)
-  worker.getAPIInstance(Methods)
-  worker.getAPIInstance(Test)
+export function setUpPlugins(worker: RpcHost) {
+  worker.getExposedModuleInstance(Logger);
+  worker.getExposedModuleInstance(Methods);
+  worker.getExposedModuleInstance(Test);
 }

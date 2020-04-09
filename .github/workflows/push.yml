@@ -24,4 +24,4 @@ jobs:
       - name: npm login
         run: echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_AUTH_TOKEN }}" > ~/.npmrc
       - name: build & test & publish
-        run:  make publish
+        run:  xvfb-run -a --server-args='-screen 0 1280x800x24 -ac -nolisten tcp -dpi 96 +extension RANDR' make publish
