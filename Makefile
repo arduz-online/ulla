@@ -94,7 +94,7 @@ build: lib $(BUILD_ECS) $(RPC_DEPS) $(AMD_DEP) $(COMPILER) $(ECS_COMPILED_FILES_
 publish: clean build example $(NPM_PUBLISH_SCRIPT) ## Release a new version, using the `scripts/npmPublish` script
 	@cd $(PWD)/packages/ulla-ecs; $(NODE) $(PWD)/scripts/npmPublish.js
 	@cd $(PWD)/packages/ulla-compiler; $(NODE) $(PWD)/scripts/npmPublish.js
-	# @cd $(PWD)/packages/ulla-rpc; $(NODE) $(PWD)/scripts/npmPublish.js
+	@cd $(PWD)/packages/ulla-rpc; $(NODE) $(PWD)/scripts/npmPublish.js
 
 .PHONY: clean lib
 
