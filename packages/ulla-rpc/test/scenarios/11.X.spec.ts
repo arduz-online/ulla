@@ -1,5 +1,5 @@
 import { EventDispatcher, EventDispatcherBinding } from '../../lib/common/core/EventDispatcher'
-import { SubscribableAPI, APIOptions, exposeMethod, registerAPI } from '../../lib/host'
+import { exposeProcedure, SubscribableModule, registerModule, ExposableModuleOptions } from '../../lib/host'
 import { testInWorker } from './support/Helpers'
 import * as assert from 'assert'
 
@@ -34,12 +34,12 @@ class EventListener extends EventDispatcher {
   }
 }
 
-@registerAPI('eventController')
-export class EventController extends SubscribableAPI {
+@registerModule('eventController')
+export class EventController extends SubscribableModule {
   private listener: EventListener
   private bindings: EventDispatcherBinding[] = []
 
-  constructor(opts: APIOptions) {
+  constructor(opts: ExposableModuleOptions) {
     super(opts)
     this.listener = new EventListener()
 
@@ -48,12 +48,12 @@ export class EventController extends SubscribableAPI {
     })
   }
 
-  @exposeMethod
+  @exposeProcedure
   async setCount(count: number) {
     this.listener.count = 0
   }
 
-  @exposeMethod
+  @exposeProcedure
   async subscribe(event: string) {
     const binding = this.listener.on(event, (e: any) => {
       this.options.notify('SubscribedEvent', { event, data: e.data })
@@ -62,7 +62,7 @@ export class EventController extends SubscribableAPI {
     this.bindings.push(binding)
   }
 
-  @exposeMethod
+  @exposeProcedure
   async unsubscribe(event: string) {
     this.bindings.filter(binding => binding.event === event).forEach(binding => binding.off())
   }

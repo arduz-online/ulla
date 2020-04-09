@@ -1,7 +1,7 @@
 import { test } from './support/ClientHelpers'
 
-test(async ScriptingClient => {
-  const { xRuntime, xDebugger, xProfiler } = await ScriptingClient.loadAPIs(['xRuntime', 'xDebugger', 'xProfiler'])
+test(async rpcClient => {
+  const { xRuntime, xDebugger, xProfiler } = await rpcClient.loadModules(['xRuntime', 'xDebugger', 'xProfiler'])
 
   await Promise.all([xRuntime.enable(), xDebugger.enable(), xProfiler.enable(), xRuntime.run()])
 

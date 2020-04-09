@@ -1,0 +1,22 @@
+on:
+  push:
+    branches:
+      - "!master"
+  pull_request:
+
+name: CI
+jobs:
+  install:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+      - name: Use Node.js 10.x
+        uses: actions/setup-node@v1
+        with:
+          node-version: 10.x
+      - name: clean
+        run:  make clean
+      - name: install
+        run:  make install
+      - name: build & test
+        run:  xvfb-run -a --server-args='-screen 0 1280x800x24 -ac -nolisten tcp -dpi 96 +extension RANDR' make build

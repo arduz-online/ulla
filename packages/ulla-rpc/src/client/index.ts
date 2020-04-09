@@ -1,6 +1,6 @@
 // Exports
 
-export * from './Script'
+export * from './RpcClient'
 export * from './EventSubscriber'
 
 export { WebWorkerTransport } from '../common/transports/WebWorker'

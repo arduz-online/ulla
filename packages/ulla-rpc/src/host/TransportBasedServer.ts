@@ -1,8 +1,8 @@
 import { Server } from '../common/json-rpc/Server'
-import { IServerOpts, ScriptingTransport } from '../common/json-rpc/types'
+import { IServerOpts, RpcTransport } from '../common/json-rpc/types'
 
-export class TransportBasedServer extends Server<ScriptingTransport> {
-  constructor(public transport: ScriptingTransport, opt: IServerOpts = {}) {
+export class TransportBasedServer extends Server<RpcTransport> {
+  constructor(public transport: RpcTransport, opt: IServerOpts = {}) {
     super(opt)
 
     if (!this.transport) {
@@ -22,7 +22,7 @@ export class TransportBasedServer extends Server<ScriptingTransport> {
     }
   }
 
-  sendMessage(receiver: ScriptingTransport, message: string) {
+  sendMessage(receiver: RpcTransport, message: string) {
     receiver.sendMessage(message)
   }
 

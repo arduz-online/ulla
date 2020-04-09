@@ -10,7 +10,7 @@ const blacklistedMethods = ['then', 'catch']
  * This allows the consumer to abstract all the internal details of marshalling the message from function call to a string
  * Calling client.api('') will return an unprefixed client. e.g api.hello() is equivalient to client.send('hello')
  */
-export function getApi<T extends object = any>(rpcClient: Client, _prefix: string = ''): T {
+export function getModule<T extends object = any>(rpcClient: Client, _prefix: string = ''): T {
   if (!Proxy) {
     throw new Error('getApi() requires ES6 Proxy. Please use an ES6 compatible engine')
   }

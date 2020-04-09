@@ -1,5 +1,5 @@
 import { EventDispatcher } from '../../../lib/common/core/EventDispatcher'
-import { Script } from '../../../lib/client'
+import { RpcClient } from '../../../lib/client'
 
 export interface IMessageBusOptions {}
 
@@ -21,9 +21,9 @@ export class MessageBusClient<T = any> extends EventDispatcher<T> {
     })
   }
 
-  static async acquireChannel(system: Script, channelName: string, options: IMessageBusOptions = {}) {
+  static async acquireChannel(system: RpcClient, channelName: string, options: IMessageBusOptions = {}) {
     const busId = Math.random().toString(36)
-    const { MessageBus } = await system.loadAPIs(['MessageBus'])
+    const { MessageBus } = await system.loadModules(['MessageBus'])
 
     const bus = await MessageBus.getChannel(channelName, busId, options)
 

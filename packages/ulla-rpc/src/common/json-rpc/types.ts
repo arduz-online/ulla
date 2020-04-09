@@ -129,7 +129,7 @@ export type IServer = {
 
 export type IServerOpts = ILogOpts
 
-export interface ScriptingTransport {
+export interface RpcTransport {
   /** the allowBinary property tells if the transport allows binary serialization */
   allowBinary?: boolean
 

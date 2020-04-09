@@ -1,5 +1,5 @@
 import { wait } from './support/Helpers'
-import { registerAPI, API, ScriptingHost, APIOptions } from '../../lib/host'
+import { registerModule, ExposableModule, RpcHost, ExposableModuleOptions } from '../../lib/host'
 import './support/MessageBusManager'
 import { WebWorkerTransport } from '../../lib/client'
 
@@ -12,11 +12,11 @@ import { WebWorkerTransport } from '../../lib/client'
  * loop will continue.
  */
 
-@registerAPI('Terminate')
-export class Terminator extends API {
+@registerModule('Terminate')
+export class Terminator extends ExposableModule {
   private lastPing: number = 0
 
-  constructor(opt: APIOptions) {
+  constructor(opt: ExposableModuleOptions) {
     super(opt)
     opt.on('Ping', () => (this.lastPing = +new Date()))
     this.lastPing = +new Date()
@@ -30,11 +30,11 @@ export class Terminator extends API {
 
 describe('Terminate', function() {
   it('should kill the worker', async () => {
-    const worker = await ScriptingHost.fromTransport(
+    const worker = await RpcHost.fromTransport(
       WebWorkerTransport(new Worker('test/out/fixtures/6.GreedyWorker.js'))
     )
     worker.enable()
-    const api = worker.getAPIInstance(Terminator)
+    const api = worker.getExposedModuleInstance(Terminator)
 
     while (api.isAlive()) {
       console.log('it is alive')

@@ -1,8 +1,8 @@
 import { Server } from 'http'
 import * as assert from 'assert'
 import { Server as WebSocketServer } from 'ws'
-import { WebSocketTransport, Script } from '../../lib/client'
-import { ScriptingTransport } from '../../lib/common/json-rpc/types'
+import { WebSocketTransport, RpcClient } from '../../lib/client'
+import { RpcTransport } from '../../lib/common/json-rpc/types'
 
 export interface Methods {
   fail(): Promise<void>
@@ -25,16 +25,16 @@ export interface Methods {
   singleBounce<T>(a: T): Promise<T>
 }
 
-function testWithTransport(transport: ScriptingTransport, fn: (script: Script) => Promise<any>) {
-  const ScriptingClient = new Script(transport)
-  ScriptingClient.on('error', (e: Error) => {
+function testWithTransport(transport: RpcTransport, fn: (script: RpcClient) => Promise<any>) {
+  const rpcClient = new RpcClient(transport)
+  rpcClient.on('error', (e: Error) => {
     console.log('error in script')
     console.dir(e)
   })
 
-  ScriptingClient.loadAPIs(['Test'])
+  rpcClient.loadModules(['Test'])
     .then((APIs: any) =>
-      fn(ScriptingClient)
+      fn(rpcClient)
         .then(x => APIs.Test.pass(x))
         .catch(x => {
           console.error('Test failed')
@@ -50,8 +50,8 @@ export function initializeWebSocketTester(server: Server) {
   wss.on('connection', function connection(ws, req) {
     console.log('Got websocket connection')
 
-    testWithTransport(WebSocketTransport(ws as any), async ScriptingClient => {
-      const { Methods } = (await ScriptingClient.loadAPIs(['Methods'])) as {
+    testWithTransport(WebSocketTransport(ws as any), async rpcClient => {
+      const { Methods } = (await rpcClient.loadModules(['Methods'])) as {
         Methods: Methods
       }
 

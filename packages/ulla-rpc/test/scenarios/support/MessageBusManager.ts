@@ -1,22 +1,22 @@
-import { registerAPI, API, exposeMethod, APIOptions, getExposedMethods } from '../../../lib/host'
+import { ExposableModule, exposeProcedure, ExposableModuleOptions, getExposedProcedures, registerModule } from '../../../lib/host'
 import { EventDispatcher, EventDispatcherBinding } from '../../../lib/common/core/EventDispatcher'
 
 const messageBus = new EventDispatcher()
 
-export class IntermediateApi extends API {
-  @exposeMethod
+export class IntermediateApi extends ExposableModule {
+  @exposeProcedure
   async sayHi() {
     // stub
   }
 }
 
-@registerAPI('MessageBus')
+@registerModule('MessageBus')
 export class MessageBusManager extends IntermediateApi {
   joinedTo: EventDispatcherBinding[] = []
 
-  constructor(options: APIOptions) {
+  constructor(options: ExposableModuleOptions) {
     super(options)
-    const methods = getExposedMethods(this)
+    const methods = getExposedProcedures(this)
 
     if (!methods.has('getChannel')) {
       console.log(this)
@@ -29,7 +29,7 @@ export class MessageBusManager extends IntermediateApi {
     }
   }
 
-  @exposeMethod
+  @exposeProcedure
   async getChannel(name: string, uid: string, options: any) {
     const id = (Math.random() * 100000000).toFixed(0)
 

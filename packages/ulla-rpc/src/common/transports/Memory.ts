@@ -1,4 +1,4 @@
-import { ScriptingTransport } from '../json-rpc/types'
+import { RpcTransport } from '../json-rpc/types'
 import { EventDispatcher } from '../core/EventDispatcher'
 
 export function MemoryTransport() {
@@ -8,7 +8,7 @@ export function MemoryTransport() {
   const clientEd = new EventDispatcher()
   const serverEd = new EventDispatcher()
 
-  function configureMemoryTransport(receiver: EventDispatcher, sender: EventDispatcher): ScriptingTransport {
+  function configureMemoryTransport(receiver: EventDispatcher, sender: EventDispatcher): RpcTransport {
     return {
       sendMessage(message) {
         sender.emit('message', message)

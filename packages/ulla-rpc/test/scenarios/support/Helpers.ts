@@ -1,7 +1,7 @@
-import { ScriptingHost } from '../../../lib/host'
+import { RpcHost } from '../../../lib/host'
 import { Test } from './Commons'
 import { WebWorkerTransport } from '../../../lib/client'
-import { ScriptingTransport } from '../../../lib/common/json-rpc/types'
+import { RpcTransport } from '../../../lib/common/json-rpc/types'
 
 export type IFuture<T> = Promise<T> & {
   resolve: (x: T) => void
@@ -10,8 +10,8 @@ export type IFuture<T> = Promise<T> & {
 
 export type ITestInWorkerOptions = {
   log?: boolean
-  validateResult?: (result: any, worker: ScriptingHost) => void
-  execute?: (worker: ScriptingHost) => void
+  validateResult?: (result: any, worker: RpcHost) => void
+  execute?: (worker: RpcHost) => void
   plugins?: any[]
 }
 
@@ -55,21 +55,21 @@ export function testInWorker(file: string, options: ITestInWorkerOptions = {}) {
 export async function testWithTransport(
   file: string,
   options: ITestInWorkerOptions = {},
-  transport: ScriptingTransport
+  transport: RpcTransport
 ) {
-  const system = await ScriptingHost.fromTransport(transport)
+  const system = await RpcHost.fromTransport(transport)
 
   if (options.log) {
     system.setLogging({ logConsole: true })
   }
 
-  options.plugins && options.plugins.forEach($ => system.getAPIInstance($))
+  options.plugins && options.plugins.forEach($ => system.getExposedModuleInstance($))
 
   system.enable()
 
   options.execute && options.execute(system)
 
-  const TestPlugin = system.getAPIInstance(Test)
+  const TestPlugin = system.getExposedModuleInstance(Test)
 
   if (!TestPlugin) throw new Error('Cannot get the Test plugin instance')
 

@@ -1,12 +1,12 @@
 import { future, wait } from './support/Helpers'
 import * as assert from 'assert'
-import { registerAPI, API, ScriptingHost, exposeMethod } from '../../lib/host'
+import { registerModule, RpcHost, exposeProcedure, ExposableModule } from '../../lib/host'
 import { Test, setUpPlugins } from './support/Commons'
 import './support/MessageBusManager'
 import { WebWorkerTransport } from '../../lib/client'
 
-@registerAPI('TicTacToeBoard')
-export class TicTacToeBoard extends API {
+@registerModule('TicTacToeBoard')
+export class TicTacToeBoard extends ExposableModule {
   /**
    * This API should mock the behavior of a board in the floor
    * inside a parcel. It will emit events that mimic click
@@ -26,7 +26,7 @@ export class TicTacToeBoard extends API {
     this.options.notify('ChooseSymbol', { symbol })
   }
 
-  @exposeMethod
+  @exposeProcedure
   async iAmConnected(...args: any[]) {
     this.waitForConnection.resolve(args)
   }
@@ -38,8 +38,8 @@ describe('TicTacToe', function() {
 
   function randomizeGame(file: string) {
     it(`randomized game ${numberOfGames++} ${file}`, async function() {
-      let workerO = await ScriptingHost.fromTransport(WebWorkerTransport(new Worker(file)))
-      let workerX = await ScriptingHost.fromTransport(WebWorkerTransport(new Worker(file)))
+      let workerO = await RpcHost.fromTransport(WebWorkerTransport(new Worker(file)))
+      let workerX = await RpcHost.fromTransport(WebWorkerTransport(new Worker(file)))
 
       assert.equal(workerO.apiInstances.has('TicTacToeBoard'), false)
 
@@ -49,8 +49,8 @@ describe('TicTacToe', function() {
       workerO.enable()
       workerX.enable()
 
-      let apiX = workerX.getAPIInstance(TicTacToeBoard)
-      let apiO = workerO.getAPIInstance(TicTacToeBoard)
+      let apiX = workerX.getExposedModuleInstance(TicTacToeBoard)
+      let apiO = workerO.getExposedModuleInstance(TicTacToeBoard)
 
       assert.equal(workerO.apiInstances.has('TicTacToeBoard'), true)
 
@@ -78,8 +78,8 @@ describe('TicTacToe', function() {
       }
 
       // waits for result
-      const TestPluginX = workerX.getAPIInstance(Test)
-      const TestPluginO = workerO.getAPIInstance(Test)
+      const TestPluginX = workerX.getExposedModuleInstance(Test)
+      const TestPluginO = workerO.getExposedModuleInstance(Test)
 
       if (!TestPluginX) throw new Error('Cannot retieve Test plugin instance')
       if (!TestPluginO) throw new Error('Cannot retieve Test plugin instance')

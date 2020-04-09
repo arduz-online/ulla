@@ -1,13 +1,13 @@
-import { Script, inject, WebWorkerTransport } from '../../../lib/client/index'
+import { RpcClient, inject, WebWorkerTransport } from '../../../lib/client/index'
 import { Test } from '../../scenarios/support/Commons'
-import { ScriptingTransport } from '../../../lib/common/json-rpc/types'
+import { RpcTransport } from '../../../lib/common/json-rpc/types'
 
-export abstract class TestableScript extends Script {
+export abstract class TestableScript extends RpcClient {
   @inject('Test') testComponent: Test | null = null
 
   private didFail: Error | null = null
 
-  constructor(a: ScriptingTransport) {
+  constructor(a: RpcTransport) {
     super(a)
 
     this.on('error', (e: Error) => {
@@ -73,12 +73,12 @@ export function wait(ms: number): Promise<void> {
   })
 }
 
-export function testWithTransport(transport: ScriptingTransport, fn: (system: Script) => Promise<any>) {
-  const ScriptingClient = new Script(transport)
+export function testWithTransport(transport: RpcTransport, fn: (system: RpcClient) => Promise<any>) {
+  const rpcClient = new RpcClient(transport)
 
-  ScriptingClient.loadAPIs(['Test'])
+  rpcClient.loadModules(['Test'])
     .then(({ Test }) =>
-      fn(ScriptingClient)
+      fn(rpcClient)
         .then(x => Test.pass(x))
         .catch(x => {
           console.error('Test failed')
@@ -89,15 +89,15 @@ export function testWithTransport(transport: ScriptingTransport, fn: (system: Sc
     .catch(x => console.error(x))
 }
 
-export function test(fn: (system: Script) => Promise<any>) {
+export function test(fn: (system: RpcClient) => Promise<any>) {
   testWithTransport(WebWorkerTransport(self as any), fn)
 }
 
-export function testToFail(fn: (system: Script) => Promise<any>) {
-  const ScriptingClient = new Script(WebWorkerTransport(self as any))
+export function testToFail(fn: (system: RpcClient) => Promise<any>) {
+  const rpcClient = new RpcClient(WebWorkerTransport(self as any))
 
-  ScriptingClient.loadAPIs(['Test']).then(({ Test }) =>
-    fn(ScriptingClient)
+  rpcClient.loadModules(['Test']).then(({ Test }) =>
+    fn(rpcClient)
       .then(x => {
         console.error('Test did not fail')
         console.error(x)

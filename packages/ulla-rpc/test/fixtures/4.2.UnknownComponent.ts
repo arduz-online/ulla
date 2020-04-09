@@ -1,5 +1,5 @@
 import { testToFail } from './support/ClientHelpers'
 
-testToFail(async ScriptingClient => {
-  await ScriptingClient.loadAPIs([Math.random().toString()])
+testToFail(async rpcClient => {
+  await rpcClient.loadModules([Math.random().toString()])
 })

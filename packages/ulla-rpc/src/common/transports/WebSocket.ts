@@ -1,4 +1,4 @@
-import { ScriptingTransport } from '../json-rpc/types'
+import { RpcTransport } from '../json-rpc/types'
 
 export interface IWebSocketEventMap {
   close: any
@@ -33,7 +33,7 @@ export interface IWebSocket {
   ): void
 }
 
-export function WebSocketTransport(socket: IWebSocket): ScriptingTransport {
+export function WebSocketTransport(socket: IWebSocket): RpcTransport {
   const queue: (string | Uint8Array | ArrayBuffer | SharedArrayBuffer)[] = []
 
   socket.addEventListener('open', function() {
@@ -57,7 +57,7 @@ export function WebSocketTransport(socket: IWebSocket): ScriptingTransport {
     }
   }
 
-  const api: ScriptingTransport = {
+  const api: RpcTransport = {
     onConnect(handler) {
       if (socket.readyState === socket.OPEN) {
         handler()
