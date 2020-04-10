@@ -86,7 +86,7 @@ async function prepareECS(folder: string) {
 
   await injectDependencies(
     "packages/ulla-ecs",
-    ["typescript", "terser"],
+    ["typescript", "terser", "isolated-vm"],
     false
   );
   await injectDependencies(
