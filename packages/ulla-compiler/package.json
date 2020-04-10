@@ -2,11 +2,11 @@
   "name": "ulla-compiler",
   "version": "1.0.0",
   "description": "Compiler for ulla",
-  "bin": "cli.js",
+  "bin": "bin.js",
   "scripts": {},
   "keywords": [],
   "files": [
-    "cli.js",
+    "bin.js",
     "NOTICE",
     "LICENSE"
   ],
