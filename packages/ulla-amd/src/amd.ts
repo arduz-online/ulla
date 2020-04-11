@@ -44,7 +44,7 @@ namespace loader {
   const MODULE_READY = 2;
 
   const settings = {
-    baseUrl: ""
+    baseUrl: "",
   };
 
   let unnamedModules = 0;
@@ -122,7 +122,7 @@ namespace loader {
         dependencies,
         handlers: [],
         exports: {},
-        dependants: new Set()
+        dependants: new Set(),
       };
     }
 
@@ -181,13 +181,13 @@ namespace loader {
     for (let index = 0; index < depsLength; index++) {
       switch (dependencies[index]) {
         case "require":
-          let _require: typeof require = function(
+          let _require: typeof require = function (
             new_module: string | string[],
             callback: Function
           ) {
             return require(new_module, callback, parentModule);
           } as any;
-          _require.toUrl = function(module) {
+          _require.toUrl = function (module) {
             return toUrl(module, parentModule);
           };
           dependenciesResults[index] = _require;
@@ -206,14 +206,14 @@ namespace loader {
         case "module":
           dependenciesResults[index] = {
             id: parentModule,
-            uri: toUrl(parentModule)
+            uri: toUrl(parentModule),
           };
           loadedCount++;
           break;
         default:
           load(
             dependencies[index],
-            loadedModule => {
+            (loadedModule) => {
               dependenciesResults[index] = loadedModule.exports;
               loadedCount++;
               if (loadedCount === depsLength && callback) {
@@ -232,7 +232,7 @@ namespace loader {
   }
 
   function createMethodHandler(rpcHandle: string, method: MethodDescriptor) {
-    return function() {
+    return function () {
       return (global as any).callRpc(
         rpcHandle,
         method.name,
@@ -266,16 +266,15 @@ namespace loader {
         handlers: [callback],
         dependencies: [],
         dependants: new Set([parentModule]),
-        exports: {}
+        exports: {},
       };
     }
 
     if (moduleName.indexOf("@") === 0) {
+      let exports = registeredModules[moduleName].exports;
       (global as any)
-        .loadModule(moduleName)
+        .loadModule(moduleName, exports)
         .then((descriptor: ModuleDescriptor) => {
-          let exports = registeredModules[moduleName].exports;
-
           for (let i in descriptor.methods) {
             const method = descriptor.methods[i];
             exports[method.name] = createMethodHandler(
@@ -304,7 +303,7 @@ namespace loader {
             notLoadedModules.push(registeredModules[i]);
           }
 
-          registeredModules[i].dependencies.forEach($ => {
+          registeredModules[i].dependencies.forEach(($) => {
             if ($ == "require" || $ == "exports" || $ == "module") return;
             if (!registeredModules[$]) unknownModules.add($);
           });
@@ -315,14 +314,16 @@ namespace loader {
 
       if (unknownModules.size) {
         errorParts.push(
-          `\n- Undeclared/unknown modules: ${Array.from(unknownModules).join(", ")}`
+          `\n- Undeclared/unknown modules: ${Array.from(unknownModules).join(
+            ", "
+          )}`
         );
       }
 
       if (notLoadedModules.length) {
         errorParts.push(
           `\n- These modules didn't load: ${notLoadedModules
-            .map($ => $.name)
+            .map(($) => $.name)
             .join(", ")}. Please check circular dependencies.`
         );
       }
