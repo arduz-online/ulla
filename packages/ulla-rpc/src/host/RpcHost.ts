@@ -221,7 +221,7 @@ export class RpcHost extends TransportBasedServer {
       .map($ => $.name)
 
     if (notFound.length) {
-      const message = `Components not found ${notFound.join(',')}`
+      const message = `These modules are not exposed: ${notFound.join(',')}`
       throw new TypeError(message)
     }
   }

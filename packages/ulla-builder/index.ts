@@ -451,6 +451,12 @@ async function testScript(script: string) {
       ___updaters.forEach($ => $(dt))
     }
 
+    global.loadModule = function(moduleName, exports) {
+      return new Promise((_, reject) => reject(new Error("Modules do not load in VM validation mode: " + moduleName)))
+    }
+
+    global.envName = 'test-vm'
+
     global._log = function(...args) {
       $0.applyIgnored(undefined, args, { arguments: { copy: true } });
     }

@@ -90,6 +90,9 @@ lib: scripts/cleanupLib.js packages/ulla-ecs/tsconfig.json packages/ulla-ecs/pac
 
 build: lib $(BUILD_ECS) $(RPC_DEPS) $(AMD_DEP) $(COMPILER) $(ECS_COMPILED_FILES_DECL) $(DIST_PACKAGE_JSON) $(DIST_SCRIPT) ## Build all the entrypoints and run the `scripts/prepareDist` script
 	@$(NODE) ./scripts/prepareDist.js
+	@cd $(PWD)/packages/ulla-ecs; npm link
+	@cd $(PWD)/packages/ulla-compiler; npm link
+	@cd $(PWD)/packages/ulla-rpc; npm link
 
 publish: clean build example $(NPM_PUBLISH_SCRIPT) ## Release a new version, using the `scripts/npmPublish` script
 	@cd $(PWD)/packages/ulla-ecs; $(NODE) $(PWD)/scripts/npmPublish.js

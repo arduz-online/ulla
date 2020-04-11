@@ -126,7 +126,9 @@ namespace loader {
       };
     }
 
-    require(dependencies || [], ready, moduleToLoad!);
+    require(dependencies || [], ready, (err: Error) => {
+      throw err;
+    }, moduleToLoad!);
   }
 
   function moduleReady(moduleName: string) {
@@ -153,6 +155,7 @@ namespace loader {
   export function require(
     dependencies: string | string[],
     callback: Function,
+    errorCallback: Function,
     parentModule: string
   ) {
     let dependenciesResults: any[] = new Array(dependencies.length).fill(null);
@@ -183,9 +186,10 @@ namespace loader {
         case "require":
           let _require: typeof require = function (
             new_module: string | string[],
-            callback: Function
+            callback: Function,
+            errorCallback: Function
           ) {
-            return require(new_module, callback, parentModule);
+            return require(new_module, callback, errorCallback, parentModule);
           } as any;
           _require.toUrl = function (module) {
             return toUrl(module, parentModule);
@@ -221,6 +225,7 @@ namespace loader {
                 callback.apply(null, dependenciesResults);
               }
             },
+            errorCallback,
             parentModule
           );
       }
@@ -244,6 +249,7 @@ namespace loader {
   function load(
     moduleName: string,
     callback: ModuleLoadedHandler,
+    errorCallback: Function,
     parentModule: string
   ) {
     moduleName = parentModule ? toUrl(moduleName, parentModule) : moduleName;
@@ -286,8 +292,7 @@ namespace loader {
           moduleReady(moduleName);
         })
         .catch((e: any) => {
-          moduleReady(moduleName);
-          throw e;
+          errorCallback(e);
         });
     }
   }
