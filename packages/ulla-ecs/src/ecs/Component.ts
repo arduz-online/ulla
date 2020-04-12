@@ -99,7 +99,7 @@ export class DisposableComponentUpdated {
  * @public
  */
 export function Component(componentName: string, classId?: number) {
-  return function<TFunction extends ComponentConstructor<any>>(
+  return function <TFunction extends ComponentConstructor<any>>(
     target: TFunction
   ): TFunction | void {
     if (target.isComponent) {
@@ -118,7 +118,7 @@ export function Component(componentName: string, classId?: number) {
         enumerable: false,
         writable: false,
         configurable: false,
-        value: componentName
+        value: componentName,
       });
 
       if (classId !== undefined) {
@@ -126,7 +126,7 @@ export function Component(componentName: string, classId?: number) {
           enumerable: false,
           writable: false,
           configurable: false,
-          value: classId
+          value: classId,
         });
       }
 
@@ -153,7 +153,7 @@ export function Component(componentName: string, classId?: number) {
  */
 
 export function DisposableComponent(componentName: string, classId: number) {
-  return function<TFunction extends DisposableComponentConstructor<any>>(
+  return function <TFunction extends DisposableComponentConstructor<any>>(
     target: TFunction
   ): TFunction | void {
     if (target.isComponent) {
@@ -183,14 +183,14 @@ export function DisposableComponent(componentName: string, classId: number) {
         enumerable: false,
         writable: false,
         configurable: false,
-        value: componentName
+        value: componentName,
       });
 
       Object.defineProperty(ret, componentIdSymbol, {
         enumerable: false,
         writable: false,
         configurable: false,
-        value: id
+        value: id,
       });
 
       if ((classId as any) !== undefined) {
@@ -198,7 +198,7 @@ export function DisposableComponent(componentName: string, classId: number) {
           enumerable: false,
           writable: false,
           configurable: false,
-          value: classId
+          value: classId,
         });
       }
 
@@ -297,86 +297,80 @@ export class ObservableComponent {
   private subscriptions: Array<ObservableComponentSubscription> = [];
 
   static component(target: ObservableComponent, propertyKey: string) {
-    if (delete (target as any)[propertyKey]) {
-      const componentSymbol = propertyKey + "_" + Math.random();
-      (target as any)[componentSymbol] = undefined;
+    const componentSymbol = propertyKey + "_" + Math.random();
+    (target as any)[componentSymbol] = undefined;
 
-      Object.defineProperty(target, componentSymbol, {
-        ...Object.getOwnPropertyDescriptor(target, componentSymbol),
-        enumerable: false
-      });
+    Object.defineProperty(target, componentSymbol, {
+      ...Object.getOwnPropertyDescriptor(target, componentSymbol),
+      enumerable: false,
+    });
 
-      Object.defineProperty(target, propertyKey.toString(), {
-        get: function() {
-          return this[componentSymbol];
-        },
-        set: function(value) {
-          const oldValue = this[componentSymbol];
+    Object.defineProperty(target, propertyKey.toString(), {
+      get: function () {
+        return this[componentSymbol];
+      },
+      set: function (value) {
+        const oldValue = this[componentSymbol];
 
-          if (value) {
-            this.data[propertyKey] = getComponentId(value);
-          } else {
-            this.data[propertyKey] = null;
+        if (value) {
+          this.data[propertyKey] = getComponentId(value);
+        } else {
+          this.data[propertyKey] = null;
+        }
+
+        this[componentSymbol] = value;
+
+        if (value !== oldValue) {
+          this.dirty = true;
+
+          for (let i = 0; i < this.subscriptions.length; i++) {
+            this.subscriptions[i](propertyKey, value, oldValue);
           }
-
-          this[componentSymbol] = value;
-
-          if (value !== oldValue) {
-            this.dirty = true;
-
-            for (let i = 0; i < this.subscriptions.length; i++) {
-              this.subscriptions[i](propertyKey, value, oldValue);
-            }
-          }
-        },
-        enumerable: true
-      });
-    }
+        }
+      },
+      enumerable: true,
+    });
   }
 
   static field(target: ObservableComponent, propertyKey: string) {
-    if (delete (target as any)[propertyKey]) {
-      Object.defineProperty(target, propertyKey.toString(), {
-        get: function(this: ObservableComponent) {
-          return this.data[propertyKey];
-        },
-        set: function(this: ObservableComponent, value) {
-          const oldValue = this.data[propertyKey];
-          this.data[propertyKey] = value;
+    Object.defineProperty(target, propertyKey.toString(), {
+      get: function (this: ObservableComponent) {
+        return this.data[propertyKey];
+      },
+      set: function (this: ObservableComponent, value) {
+        const oldValue = this.data[propertyKey];
+        this.data[propertyKey] = value;
 
-          if (value !== oldValue) {
-            this.dirty = true;
+        if (value !== oldValue) {
+          this.dirty = true;
 
-            for (let i = 0; i < this.subscriptions.length; i++) {
-              this.subscriptions[i](propertyKey, value, oldValue);
-            }
+          for (let i = 0; i < this.subscriptions.length; i++) {
+            this.subscriptions[i](propertyKey, value, oldValue);
           }
-        },
-        enumerable: true
-      });
-    }
+        }
+      },
+      enumerable: true,
+    });
   }
 
   static readonly(target: ObservableComponent, propertyKey: string) {
-    if (delete (target as any)[propertyKey]) {
-      Object.defineProperty(target, propertyKey.toString(), {
-        get: function(this: ObservableComponent) {
-          if (!(propertyKey in this.data)) {
-            throw new Error(`The field ${propertyKey} is uninitialized`);
-          }
-          return this.data[propertyKey];
-        },
-        set: function(this: ObservableComponent, value) {
-          if (propertyKey in this.data) {
-            throw new Error(`The field ${propertyKey} is readonly`);
-          }
-          this.data[propertyKey] = value;
-          this.dirty = true;
-        },
-        enumerable: true,
-        configurable: false
-      });
-    }
+    Object.defineProperty(target, propertyKey.toString(), {
+      get: function (this: ObservableComponent) {
+        if (!(propertyKey in this.data)) {
+          throw new Error(`The field ${propertyKey} is uninitialized`);
+        }
+        return this.data[propertyKey];
+      },
+      set: function (this: ObservableComponent, value) {
+        if (propertyKey in this.data) {
+          throw new Error(`The field ${propertyKey} is readonly`);
+        }
+        this.data[propertyKey] = value;
+        this.dirty = true;
+      },
+      enumerable: true,
+      configurable: false,
+    });
   }
 
   onChange(fn: ObservableComponentSubscription) {

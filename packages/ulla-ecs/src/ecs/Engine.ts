@@ -10,19 +10,11 @@ import {
   DisposableComponentRemoved,
   getComponentClassId
 } from "./Component";
-import { EventManager, EventConstructor } from "./EventManager";
+import { EventManager } from "./EventManager";
 import { ComponentGroup } from "./ComponentGroup";
 
 import { log, error } from "./helpers";
 import { Entity } from "./Entity";
-
-/**
- * @public
- */
-@EventConstructor()
-export class EngineStarted {
-  constructor() {}
-}
 
 /**
  * @internal
@@ -399,9 +391,5 @@ export class Engine implements IEngine {
         this.checkRequirements(entity, componentGroups[i]);
       }
     }
-  }
-
-  start() {
-    this.eventManager.fireEvent(new EngineStarted());
   }
 }

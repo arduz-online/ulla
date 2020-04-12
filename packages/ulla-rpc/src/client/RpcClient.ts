@@ -1,25 +1,25 @@
-import { Client } from '../common/json-rpc/Client'
-import { getModule } from '../common/json-rpc/Module'
-import { ILogOpts, RpcTransport } from '../common/json-rpc/types'
-import { isPromiseLike } from '../common/core/isPromiseLike'
-import { hasOwnSymbol } from '../common/core/SymbolShim'
+import { Client } from "../common/json-rpc/Client";
+import { getModule } from "../common/json-rpc/Module";
+import { ILogOpts, RpcTransport } from "../common/json-rpc/types";
+import { isPromiseLike } from "../common/core/isPromiseLike";
+import { hasOwnSymbol } from "../common/core/SymbolShim";
 
 /** this is defined in the constructor RpcHost() */
-const loadModulesNotificationName = 'LoadModules'
+const loadModulesNotificationName = "LoadModules";
 
 // If there is no native Symbol
 // nor polyfill, then a plain number is used for performance.
 
 // tslint:disable-next-line
-const hasSymbol = typeof Symbol === 'function' && Symbol.for
+const hasSymbol = typeof Symbol === "function" && Symbol.for;
 
-const injectedAPISymbol = hasSymbol ? Symbol('injectedAPIs') : 0xfea0
+const injectedAPISymbol = hasSymbol ? Symbol("injectedAPIs") : 0xfea0;
 
 interface RpcClient {
-  systemDidEnable?(): Promise<void> | void
+  systemDidEnable?(): Promise<void> | void;
 }
 
-export type API = any
+export type ExposableModuleProxy = any;
 
 /**
  * This function decorates parameters to load APIs
@@ -27,93 +27,96 @@ export type API = any
  */
 export function inject(apiName?: string) {
   if (apiName !== undefined && !apiName) {
-    throw new TypeError('API name cannot be null / empty')
+    throw new TypeError("API name cannot be null / empty");
   }
-  return function<T extends RpcClient>(target: T, propertyKey: keyof T) {
-    if (typeof propertyKey === 'string') {
-      getInjectableMap(target).set(propertyKey, apiName || propertyKey)
-    } else throw new TypeError('Cannot inject APIs with non-string names')
-  }
+  return function <T extends RpcClient>(target: T, propertyKey: keyof T) {
+    if (typeof propertyKey === "string") {
+      getInjectableMap(target).set(propertyKey, apiName || propertyKey);
+    } else throw new TypeError("Cannot inject APIs with non-string names");
+  };
 }
 
 /**
  * Gets all the injected APIs of a script
  * @param instance A script to get the APIs
  */
-export function getInjectedModules<T extends RpcClient>(instance: T): Map<keyof T, string> {
-  const result = new Map<keyof T, string>()
-  let currentPrototype = Object.getPrototypeOf(instance)
+export function getInjectedModules<T extends RpcClient>(
+  instance: T
+): Map<keyof T, string> {
+  const result = new Map<keyof T, string>();
+  let currentPrototype = Object.getPrototypeOf(instance);
 
   while (!!currentPrototype) {
     if (hasOwnSymbol(currentPrototype, injectedAPISymbol)) {
-      const currentList: Map<keyof T, string> = currentPrototype[injectedAPISymbol]
-      currentList.forEach((v, k) => result.set(k, v))
+      const currentList: Map<keyof T, string> =
+        currentPrototype[injectedAPISymbol];
+      currentList.forEach((v, k) => result.set(k, v));
     }
-    currentPrototype = Object.getPrototypeOf(currentPrototype)
+    currentPrototype = Object.getPrototypeOf(currentPrototype);
   }
 
-  return result
+  return result;
 }
 
 function getInjectableMap(target: RpcClient): Map<any, string> {
-  const anyTarget: any = target
+  const anyTarget: any = target;
 
   if (!hasOwnSymbol(target, injectedAPISymbol)) {
-    anyTarget[injectedAPISymbol] = new Map()
+    anyTarget[injectedAPISymbol] = new Map();
   }
 
-  return anyTarget[injectedAPISymbol]
+  return anyTarget[injectedAPISymbol];
 }
 
 async function _injectModules(target: RpcClient) {
-  let injectedMap: Map<keyof RpcClient, string> = getInjectedModules(target)
+  let injectedMap: Map<keyof RpcClient, string> = getInjectedModules(target);
 
-  if (injectedMap.size === 0) return
+  if (injectedMap.size === 0) return;
 
-  await target.loadModules(Array.from(injectedMap.values()))
+  await target.loadModules(Array.from(injectedMap.values()));
 
-  injectedMap.forEach(function(apiName: string, property) {
-    target[property] = target.loadedModules[apiName]
-  })
+  injectedMap.forEach(function (apiName: string, property) {
+    target[property] = target.loadedModules[apiName];
+  });
 }
 
 class RpcClient extends Client {
-  static inject = inject
+  static inject = inject;
 
-  loadedModules: { [key: string]: API } = {}
+  loadedModules: { [key: string]: ExposableModuleProxy } = {};
 
-  protected started = false
+  protected started = false;
 
   constructor(private transport: RpcTransport, opt?: ILogOpts) {
-    super(opt)
+    super(opt);
 
     if (transport.onError) {
-      transport.onError(e => {
-        this.emit('error', e)
-      })
+      transport.onError((e) => {
+        this.emit("error", e);
+      });
     }
 
     if (transport.onClose) {
       transport.onClose(() => {
-        this.emit('transportClosed')
-      })
+        this.emit("transportClosed");
+      });
     }
 
-    transport.onMessage(message => {
-      this.processMessage(message)
-    })
+    transport.onMessage((message) => {
+      this.processMessage(message);
+    });
 
     if (transport.onConnect) {
       transport.onConnect(() => {
-        this.didConnect()
-      })
+        this.didConnect();
+      });
     } else {
-      this.didConnect()
+      this.didConnect();
     }
   }
 
   sendMessage(message: string) {
-    this.transport.sendMessage(message)
+    this.transport.sendMessage(message);
   }
 
   /**
@@ -124,45 +127,46 @@ class RpcClient extends Client {
    * @returns {object} loadedAPIs
    */
   async loadModules(modules: string[]): Promise<{ [key: string]: any }> {
-    const loadedKeys = Object.keys(this.loadedModules)
+    const loadedKeys = Object.keys(this.loadedModules);
 
-    const keysToRequest = modules.filter(function($) {
-      return !loadedKeys.includes($)
-    })
+    const keysToRequest = modules.filter(function ($) {
+      return !loadedKeys.includes($);
+    });
 
     if (keysToRequest.length) {
-      await this.call(loadModulesNotificationName, [keysToRequest])
+      await this.call(loadModulesNotificationName, [keysToRequest]);
 
       // Load / request the API
-      keysToRequest.forEach(async apiName => {
-        this.loadedModules[apiName] = getModule(this, apiName)
-      })
+      keysToRequest.forEach(async (apiName) => {
+        this.loadedModules[apiName] =
+          this.loadedModules[apiName] || getModule(this, apiName);
+      });
     }
 
-    return this.loadedModules
+    return this.loadedModules;
   }
 
   protected didConnect() {
-    const injection = _injectModules(this)
+    const injection = _injectModules(this);
 
-    super.didConnect()
+    super.didConnect();
 
     injection
       .then(() => {
         if (this.systemDidEnable && !this.started) {
-          this.started = true
+          this.started = true;
           try {
-            const r = this.systemDidEnable()
+            const r = this.systemDidEnable();
             if (r && isPromiseLike(r)) {
-              r.catch(e => this.emit('error', e))
+              r.catch((e) => this.emit("error", e));
             }
           } catch (e) {
-            this.emit('error', e)
+            this.emit("error", e);
           }
         }
       })
-      .catch(e => this.emit('error', e))
+      .catch((e) => this.emit("error", e));
   }
 }
 
-export { RpcClient }
+export { RpcClient };

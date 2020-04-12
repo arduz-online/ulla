@@ -10,7 +10,7 @@
     "keyofStringsOnly": true,
     "inlineSourceMap": true,
     "inlineSources": true,
-    "useDefineForClassFields": true,
+    "useDefineForClassFields": false,
     "strict": true,
     "strictNullChecks": true,
     "strictBindCallApply": true,

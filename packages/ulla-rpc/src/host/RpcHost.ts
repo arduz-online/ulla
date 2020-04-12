@@ -79,7 +79,7 @@ export class RpcHost extends TransportBasedServer {
   private constructor(worker: RpcTransport) {
     super(worker)
 
-    this.expose('LoadModules', this.RPCLoadAPIs.bind(this))
+    this.expose('LoadModules', this.RPCLoadModules.bind(this))
   }
 
   static async fromTransport(transport: RpcTransport) {
@@ -209,7 +209,7 @@ export class RpcHost extends TransportBasedServer {
   /**
    * Preloads a list of components
    */
-  private async RPCLoadAPIs(apiNames: string[]) {
+  private async RPCLoadModules(apiNames: string[]) {
     // tslint:disable-next-line
     if (typeof apiNames !== 'object' || !(apiNames instanceof Array)) {
       throw new TypeError('RPCLoadComponents(names) name must be an array of strings')
