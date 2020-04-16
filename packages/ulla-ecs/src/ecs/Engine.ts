@@ -1,4 +1,10 @@
-import { IEngine, ISystem, IEntity, ComponentAdded, ComponentRemoved } from "./IEntity";
+import {
+  IEngine,
+  ISystem,
+  IEntity,
+  ComponentAdded,
+  ComponentRemoved,
+} from "./IEntity";
 
 import {
   getComponentName,
@@ -8,10 +14,10 @@ import {
   ComponentConstructor,
   DisposableComponentCreated,
   DisposableComponentRemoved,
-  getComponentClassId
+  getComponentClassId,
 } from "./Component";
 import { EventManager } from "./EventManager";
-import { ComponentGroup } from "./ComponentGroup";
+import { ComponentGroup, ComponentGroupOptions } from "./ComponentGroup";
 
 import { log, error } from "./helpers";
 import { Entity } from "./Entity";
@@ -38,7 +44,10 @@ export class Engine implements IEngine {
   readonly addedSystems: ISystem[] = [];
 
   private readonly _entities: Record<string, IEntity> = {};
-  private readonly _disposableComponents: Record<string, DisposableComponentLike> = {};
+  private readonly _disposableComponents: Record<
+    string,
+    DisposableComponentLike
+  > = {};
   private readonly _componentGroups: Record<string, ComponentGroup[]> = {};
 
   // systems that doesn't require any component or handle their own logic
@@ -49,12 +58,22 @@ export class Engine implements IEngine {
   }
 
   get disposableComponents() {
-    return this._disposableComponents as Readonly<Record<string, DisposableComponentLike>>;
+    return this._disposableComponents as Readonly<
+      Record<string, DisposableComponentLike>
+    >;
   }
 
   constructor(rootEntity: IEntity) {
-    this.eventManager.addListener(ComponentAdded, this, this.componentAddedHandler);
-    this.eventManager.addListener(ComponentRemoved, this, this.componentRemovedHandler);
+    this.eventManager.addListener(
+      ComponentAdded,
+      this,
+      this.componentAddedHandler
+    );
+    this.eventManager.addListener(
+      ComponentRemoved,
+      this,
+      this.componentRemovedHandler
+    );
     this.rootEntity = rootEntity;
   }
 
@@ -76,7 +95,10 @@ export class Engine implements IEngine {
       entity.setParent(this.rootEntity);
     } else {
       if (!parent.isAddedToEngine() && parent !== this.rootEntity) {
-        log("Engine: warning, added an entity with a parent not present in the engine. Parent id: " + parent.uuid);
+        log(
+          "Engine: warning, added an entity with a parent not present in the engine. Parent id: " +
+            parent.uuid
+        );
       }
     }
 
@@ -134,7 +156,9 @@ export class Engine implements IEngine {
     } else {
       log("Engine: Trying to remove non existent entity from engine.");
       if (!entity.isAddedToEngine()) {
-        log(`Engine: Entity "${entity.uuid}" has not been added to any engine yet.`);
+        log(
+          `Engine: Entity "${entity.uuid}" has not been added to any engine yet.`
+        );
       } else {
         log("Engine: Entity id: " + id);
       }
@@ -215,9 +239,14 @@ export class Engine implements IEngine {
   }
 
   getEntitiesWithComponent(component: string): Record<string, any>;
-  getEntitiesWithComponent(component: ComponentConstructor<any>): Record<string, IEntity>;
-  getEntitiesWithComponent(component: ComponentConstructor<any> | string): Record<string, IEntity> {
-    const componentName = typeof component === "string" ? component : getComponentName(component);
+  getEntitiesWithComponent(
+    component: ComponentConstructor<any>
+  ): Record<string, IEntity>;
+  getEntitiesWithComponent(
+    component: ComponentConstructor<any> | string
+  ): Record<string, IEntity> {
+    const componentName =
+      typeof component === "string" ? component : getComponentName(component);
 
     if (componentName in this.entityLists) {
       return this.entityLists[componentName];
@@ -232,8 +261,12 @@ export class Engine implements IEngine {
     const classId = getComponentClassId(component);
     this._disposableComponents[id] = component;
     if (classId !== null) {
-      this.eventManager.fireEvent(new DisposableComponentCreated(id, name, classId));
-      this.eventManager.fireEvent(new DisposableComponentUpdated(id, component));
+      this.eventManager.fireEvent(
+        new DisposableComponentCreated(id, name, classId)
+      );
+      this.eventManager.fireEvent(
+        new DisposableComponentUpdated(id, component)
+      );
     }
   }
 
@@ -252,12 +285,22 @@ export class Engine implements IEngine {
   }
 
   updateComponent(component: DisposableComponentLike) {
-    this.eventManager.fireEvent(new DisposableComponentUpdated(getComponentId(component), component));
+    this.eventManager.fireEvent(
+      new DisposableComponentUpdated(getComponentId(component), component)
+    );
   }
 
-  getComponentGroup(...requires: ComponentConstructor<any>[]) {
-    // TODO: memoize?
-    const componentGroup = new ComponentGroup(...requires);
+  getComponentGroup(...requires: ComponentConstructor<any>[]): ComponentGroup;
+  getComponentGroup(
+    options: ComponentGroupOptions,
+    ...requires: ComponentConstructor<any>[]
+  ): ComponentGroup;
+  getComponentGroup(firstArg: any, ...requires: ComponentConstructor<any>[]) {
+    const hasOptions = typeof firstArg === "object";
+
+    const componentGroup = hasOptions
+      ? new ComponentGroup(firstArg, ...requires)
+      : new ComponentGroup({}, firstArg, ...requires);
 
     componentGroup.active = true;
 

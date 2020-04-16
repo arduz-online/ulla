@@ -5,13 +5,16 @@ type ModuleDescriptor = {
 
 type MethodDescriptor = { name: string };
 
-// declare function loadModule(moduleName: string): PromiseLike<ModuleDescriptor>;
-// declare function callRpc(
-//   moduleHandle: string,
-//   methodName: string,
-//   args: ArrayLike<any>
-// ): PromiseLike<any>;
-// declare function onStart(cb: Function);
+declare function loadModule(
+  moduleName: string,
+  exports: any
+): Promise<ModuleDescriptor>;
+declare function callRpc(
+  moduleHandle: string,
+  methodName: string,
+  args: ArrayLike<any>
+): Promise<any>;
+declare function onStart(cb: Function): void;
 
 type Module = {
   name: string;
@@ -26,16 +29,24 @@ type Module = {
 type ModuleLoadedHandler = (module: Module) => void;
 
 declare var self: any;
+declare var window: any;
 
-global = (typeof global !== "undefined"
-  ? global
-  : typeof self !== "undefined"
-  ? self
-  : typeof this !== "undefined"
-  ? this
-  : null) as any;
+// A naive attempt at getting the global `this`. Don’t use this!
+const getGlobalThis = function (this: typeof globalThis) {
+  if (typeof globalThis !== "undefined") return globalThis;
+  if (typeof self !== "undefined") return self;
+  if (typeof window !== "undefined") return window;
+  if (typeof global !== "undefined") return global;
+  // Note: this might still return the wrong result!
+  if (typeof this !== "undefined") return this;
+  throw new Error("Unable to locate global `this`");
+};
 
-if (!global) throw new Error("unknown global context");
+const globalObject = (getGlobalThis as any)();
+
+if (!("global" in globalObject)) {
+  globalObject.global = global;
+}
 
 namespace loader {
   "use strict";
@@ -106,7 +117,7 @@ namespace loader {
 
       exports =
         typeof factory === "function"
-          ? factory.apply(global, deps) || exports
+          ? factory.apply(globalObject, deps) || exports
           : factory;
 
       module.exports = exports;
@@ -238,11 +249,7 @@ namespace loader {
 
   function createMethodHandler(rpcHandle: string, method: MethodDescriptor) {
     return function () {
-      return (global as any).callRpc(
-        rpcHandle,
-        method.name,
-        [].slice.call(arguments, 0)
-      );
+      return callRpc(rpcHandle, method.name, [].slice.call(arguments, 0));
     };
   }
 
@@ -278,27 +285,32 @@ namespace loader {
 
     if (moduleName.indexOf("@") === 0) {
       let exports = registeredModules[moduleName].exports;
-      (global as any)
-        .loadModule(moduleName, exports)
-        .then((descriptor: ModuleDescriptor) => {
-          for (let i in descriptor.methods) {
-            const method = descriptor.methods[i];
-            exports[method.name] = createMethodHandler(
-              descriptor.rpcHandle,
-              method
-            );
-          }
+      if (typeof loadModule === "function") {
+        loadModule(moduleName, exports)
+          .then((descriptor: ModuleDescriptor) => {
+            for (let i in descriptor.methods) {
+              const method = descriptor.methods[i];
+              exports[method.name] = createMethodHandler(
+                descriptor.rpcHandle,
+                method
+              );
+            }
 
-          moduleReady(moduleName);
-        })
-        .catch((e: any) => {
-          errorCallback(e);
-        });
+            moduleReady(moduleName);
+          })
+          .catch((e: any) => {
+            errorCallback(e);
+          });
+      } else {
+        throw new Error(
+          "Asynchronous modules will not work because loadModule function is not present"
+        );
+      }
     }
   }
 
-  if (typeof (global as any).onStart !== "undefined") {
-    (global as any).onStart(() => {
+  if (typeof onStart !== "undefined") {
+    onStart(() => {
       const unknownModules = new Set<string>();
       const notLoadedModules: Module[] = [];
 
@@ -370,5 +382,5 @@ namespace loader {
   require.toUrl = toUrl;
 }
 
-(global as any).define = loader.define;
-(global as any).dclamd = loader;
+(globalObject as any).define = loader.define;
+(globalObject as any).dclamd = loader;

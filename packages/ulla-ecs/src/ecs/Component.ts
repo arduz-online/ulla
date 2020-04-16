@@ -292,7 +292,7 @@ export type ObservableComponentSubscription = (
  * @public
  */
 export class ObservableComponent {
-  dirty: boolean = false;
+  dirty: boolean = true;
   data: any = {};
   private subscriptions: Array<ObservableComponentSubscription> = [];
 

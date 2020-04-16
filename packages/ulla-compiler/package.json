@@ -15,7 +15,7 @@
     "url": "git+https://github.com/menduz/ulla.git"
   },
   "author": "menduz",
-  "license": "Apache 2.0",
+  "license": "Apache-2.0",
   "dependencies": {
     "chalk": "^4.0.0",
     "glob": "^7.1.6",

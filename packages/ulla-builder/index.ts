@@ -46,7 +46,7 @@ async function compile(
   const files: FileMap = {};
 
   // initialize the list of files
-  cfg.fileNames.forEach(fileName => {
+  cfg.fileNames.forEach((fileName) => {
     files[fileName] = { version: 0 };
   });
 
@@ -54,9 +54,9 @@ async function compile(
   const services = ts.createLanguageService(
     {
       getScriptFileNames: () => cfg.fileNames,
-      getScriptVersion: fileName =>
+      getScriptVersion: (fileName) =>
         files[fileName] && files[fileName].version.toString(),
-      getScriptSnapshot: fileName => {
+      getScriptSnapshot: (fileName) => {
         if (!fs.existsSync(fileName)) {
           return undefined;
         }
@@ -71,17 +71,17 @@ async function compile(
       },
       getCurrentDirectory: ts.sys.getCurrentDirectory,
       getCompilationSettings: () => cfg.options,
-      getDefaultLibFileName: options => ts.getDefaultLibFilePath(options),
+      getDefaultLibFileName: (options) => ts.getDefaultLibFilePath(options),
       fileExists: ts.sys.fileExists,
       readFile: ts.sys.readFile,
-      readDirectory: ts.sys.readDirectory
+      readDirectory: ts.sys.readDirectory,
     },
     ts.createDocumentRegistry()
   );
 
   if (watch) {
     // Now let's watch the files
-    cfg.fileNames.forEach(fileName => {
+    cfg.fileNames.forEach((fileName) => {
       watchFile(fileName, services, files, cfg.libs);
     });
   }
@@ -119,6 +119,61 @@ function watchFile(
       }
     );
   }
+}
+
+function minify(files: string | string[] | { [file: string]: string }) {
+  const result = terser.minify(files, {
+    ecma: 2020,
+    warnings: true,
+    nameCache,
+    mangle: PRODUCTION
+      ? {
+          toplevel: false,
+          module: false,
+          keep_classnames: true,
+          keep_fnames: true,
+          reserved: ["global", "define"],
+        }
+      : false,
+    compress: PRODUCTION
+      ? {
+          passes: 2,
+        }
+      : false,
+    output: PRODUCTION
+      ? {
+          comments: /^!/,
+          beautify: false,
+        }
+      : {
+          source_map: {
+            includeSources: true,
+            content: "inline",
+            url: "inline",
+          },
+          beautify: true,
+        },
+    sourceMap: PRODUCTION
+      ? false
+      : {
+          includeSources: true,
+          content: "inline",
+          url: "inline",
+        },
+    toplevel: false,
+  });
+
+  if (result.warnings) {
+    for (let warning of result.warnings) {
+      console.warn("!   Warning: " + warning);
+    }
+  }
+
+  if (result.error) {
+    console.warn("!   Error: " + result.error);
+  }
+
+  return result;
 }
 
 async function emitFile(
@@ -162,75 +217,48 @@ async function emitFile(
       `> Emitting ${o.name.replace(ts.sys.getCurrentDirectory(), "")}`
     );
 
-    let ret = "";
+    let compiled: string;
 
-    const compiled = terser.minify(
-      {
-        "ulla-amd.js": ecsPackageAMD,
-        "ulla-ecs.js": ecsPackageECS,
-        ...loadedMap,
-        "index.js": o.text
-      },
-      {
-        ecma: 2020,
-        warnings: true,
-        nameCache,
-        mangle: PRODUCTION
-          ? {
-              toplevel: false,
-              module: false,
-              keep_classnames: true,
-              keep_fnames: true,
-              reserved: ["global", "define"]
-            }
-          : false,
-        compress: PRODUCTION
-          ? {
-              passes: 2
-            }
-          : false,
-        output: {
-          comments: /^!/,
-          beautify: false
-        },
-        sourceMap: PRODUCTION
-          ? false
-          : {
-              includeSources: true
-            },
-        toplevel: false
+    const files = {
+      "ulla-amd.js": ecsPackageAMD,
+      "ulla-ecs.js": ecsPackageECS,
+      ...loadedMap,
+      "index.js": o.text,
+    };
+
+    if (PRODUCTION) {
+      compiled = minify(files).code;
+    } else {
+      const ret: string[] = [];
+
+      for (let file in files) {
+        // minify only to show errors
+        minify(files[file] as string);
+
+        const code = files[file] + "\n;//# sourceURL=ulla-build://" + file;
+
+        ret.push(
+          `/* ${JSON.stringify(file)} */\neval(${JSON.stringify(code)})`
+        );
       }
-    );
 
-    if (compiled.warnings) {
-      for (let warning of compiled.warnings) {
-        console.warn("!   Warning: " + warning);
-      }
-    }
-
-    if (compiled.error) {
-      console.warn("!   Error: " + compiled.error);
-      ret =
-        ret +
-        `;\n throw new Error("Compilation error: " + ${JSON.stringify(
-          compiled.error
-        )})`;
+      compiled = ret.join("\n");
     }
 
     ensureDirectoriesExist(dirname(o.name));
 
-    fs.writeFileSync(o.name, compiled.code, "utf8");
+    fs.writeFileSync(o.name, compiled, "utf8");
 
     console.log("> Validating runtime...");
 
     if (WATCH) {
-      const script = testScript(compiled.code);
+      const script = testScript(compiled);
 
       script
         .then(() => {
           console.log("> Validation OK");
         })
-        .catch(e => {
+        .catch((e) => {
           console.log("! Validation error: " + e.message);
         });
 
@@ -238,11 +266,7 @@ async function emitFile(
 
       console.log("\nThe compiler is watching file changes...\n");
     } else {
-      if (compiled.error) {
-        throw compiled.error;
-      }
-
-      await testScript(compiled.code);
+      await testScript(compiled);
     }
   }
 }
@@ -263,7 +287,7 @@ function getConfiguration(
     useCaseSensitiveFileNames: ts.sys.useCaseSensitiveFileNames,
     fileExists: ts.sys.fileExists,
     readFile: ts.sys.readFile,
-    readDirectory: ts.sys.readDirectory
+    readDirectory: ts.sys.readDirectory,
   };
   const parsed = ts.parseConfigFileTextToJson(
     "tsconfig.json",
@@ -346,6 +370,13 @@ function getConfiguration(
     process.exit(1);
   }
 
+  if (!PRODUCTION) {
+    tsconfig.options.inlineSourceMap = true;
+    tsconfig.options.inlineSources = true;
+    tsconfig.options.sourceMap = false;
+    tsconfig.options.sourceRoot = ts.sys.getCurrentDirectory();
+  }
+
   return Object.assign(tsconfig, { libs });
 }
 
@@ -421,12 +452,12 @@ async function testScript(script: string) {
   await jail.set("global", jail.derefInto());
 
   // We will create a basic `log` function for the new isolate to use.
-  const logCallback = function(...args) {
+  const logCallback = function (...args) {
     console.log("VM> ", ...args);
   };
 
   // We will create a basic `log` function for the new isolate to use.
-  const errorCallback = function(...args) {
+  const errorCallback = function (...args) {
     console.log("VM Error> ", ...args);
   };
 
@@ -485,7 +516,7 @@ async function testScript(script: string) {
 }
 
 // Start the watcher
-compile(getConfiguration(packageJson), WATCH).catch(e => {
+compile(getConfiguration(packageJson), WATCH).catch((e) => {
   console.error(e);
   process.exit(1);
 });
