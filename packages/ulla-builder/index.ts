@@ -10,16 +10,11 @@ import { resolve, dirname, relative } from "path";
 
 ts.sys.getCurrentDirectory = () => process.cwd();
 
-const ecsPackage = JSON.parse(
-  loadArtifact(process.env.ECS_PACKAGE_JSON || "ulla-ecs/package.json")
-);
 const packageJson = JSON.parse(loadArtifact("package.json"));
-
-const ecsVersion = ecsPackage.version;
 
 const nameCache = {};
 
-console.log(`> Using ulla-ecs version ${ecsVersion}`);
+console.log(`> ulla-builder`);
 
 const WATCH =
   process.argv.indexOf("--watch") !== -1 || process.argv.indexOf("-w") !== -1;
@@ -307,7 +302,7 @@ function getConfiguration(
   let hasError = false;
 
   if (tsconfig.options.module !== ts.ModuleKind.AMD) {
-    console.error("! Error: tsconfig.json: ulla-ecs only allows AMD modules");
+    console.error("! Error: tsconfig.json: ulla-builder only allows AMD modules");
     hasError = true;
   }
 
