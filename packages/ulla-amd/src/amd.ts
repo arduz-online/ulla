@@ -331,17 +331,17 @@ namespace loader {
 
       if (unknownModules.size) {
         errorParts.push(
-          `\n- Undeclared/unknown modules: ${Array.from(unknownModules).join(
-            ", "
-          )}`
+          `\n- Undeclared/unknown modules: ${Array.from(unknownModules)
+            .map(($) => "\n  " + $)
+            .join("")}`
         );
       }
 
       if (notLoadedModules.length) {
         errorParts.push(
           `\n- These modules didn't load: ${notLoadedModules
-            .map(($) => $.name)
-            .join(", ")}. Please check circular dependencies.`
+            .map(($) => "\n  " + $.name)
+            .join("")}. Please check circular dependencies.`
         );
       }
 

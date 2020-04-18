@@ -198,7 +198,7 @@ async function emitFile(
     );
   }
 
-  logErrors(fileName, services);
+  logErrors(services);
 
   const ecsPackageECS = loadArtifact(
     process.env.ECS_PATH || "ulla-ecs/dist/src/index.js"
@@ -271,11 +271,12 @@ async function emitFile(
   }
 }
 
-function logErrors(fileName: string, services: ts.LanguageService) {
+function logErrors(services: ts.LanguageService) {
   let allDiagnostics = services
     .getCompilerOptionsDiagnostics()
-    .concat(services.getSyntacticDiagnostics(fileName))
-    .concat(services.getSemanticDiagnostics(fileName));
+    .concat(services.getProgram().getGlobalDiagnostics())
+    .concat(services.getProgram().getSemanticDiagnostics())
+    .concat(services.getProgram().getSyntacticDiagnostics());
 
   allDiagnostics.forEach(printDiagnostic);
 }
