@@ -98,6 +98,7 @@ publish: clean build example $(NPM_PUBLISH_SCRIPT) ## Release a new version, usi
 	@cd $(PWD)/packages/ulla-ecs; $(NODE) $(PWD)/scripts/npmPublish.js
 	@cd $(PWD)/packages/ulla-compiler; $(NODE) $(PWD)/scripts/npmPublish.js
 	@cd $(PWD)/packages/ulla-rpc; $(NODE) $(PWD)/scripts/npmPublish.js
+	@cd $(PWD)/packages/ulla-builder; $(NODE) $(PWD)/scripts/npmPublish.js
 
 .PHONY: clean lib
 
