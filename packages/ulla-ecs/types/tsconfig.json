@@ -10,6 +10,8 @@
     "keyofStringsOnly": true,
     "inlineSourceMap": true,
     "inlineSources": true,
+    "preserveConstEnums": true,
+    "alwaysStrict": true,
     "useDefineForClassFields": false,
     "strict": true,
     "strictNullChecks": true,
