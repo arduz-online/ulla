@@ -6,7 +6,7 @@ import * as ts from "typescript";
 import * as terser from "terser";
 import ivm = require("isolated-vm");
 import { inspect } from "util";
-import { resolve, dirname } from "path";
+import { resolve, dirname, relative } from "path";
 
 ts.sys.getCurrentDirectory = () => process.cwd();
 
@@ -200,15 +200,9 @@ async function emitFile(
 
   logErrors(services);
 
-  const ecsPackageECS = loadArtifact(
-    process.env.ECS_PATH || "ulla-ecs/dist/src/index.js"
-  );
-  const ecsPackageAMD = loadArtifact(
-    process.env.AMD_PATH || "ulla-ecs/artifacts/amd.js"
-  );
-
   const loadedMap = libs.reduce((acc, lib) => {
-    acc[lib] = loadArtifact(lib);
+    const normalizedPath = relative(ts.sys.getCurrentDirectory(), lib);
+    acc[normalizedPath] = loadArtifact(lib);
     return acc;
   }, {});
 
@@ -217,56 +211,59 @@ async function emitFile(
       `> Emitting ${o.name.replace(ts.sys.getCurrentDirectory(), "")}`
     );
 
-    let compiled: string;
-
-    const files = {
-      "ulla-amd.js": ecsPackageAMD,
-      "ulla-ecs.js": ecsPackageECS,
-      ...loadedMap,
-      "index.js": o.text,
-    };
-
-    if (PRODUCTION) {
-      compiled = minify(files).code;
+    if (o.name.endsWith(".d.ts")) {
+      ensureDirectoriesExist(dirname(o.name));
+      fs.writeFileSync(o.name, o.text, "utf8");
     } else {
-      const ret: string[] = [];
+      let compiled: string;
 
-      for (let file in files) {
-        // minify only to show errors
-        minify(files[file] as string);
+      const files = {
+        ...loadedMap,
+        [relative(ts.sys.getCurrentDirectory(), fileName)]: o.text,
+      };
 
-        const code = files[file] + "\n;//# sourceURL=ulla-build://" + file;
+      if (PRODUCTION) {
+        compiled = minify(files).code;
+      } else {
+        const ret: string[] = [];
 
-        ret.push(
-          `/* ${JSON.stringify(file)} */\neval(${JSON.stringify(code)})`
-        );
+        for (let file in files) {
+          // minify only to show errors
+          minify(files[file] as string);
+
+          const code = files[file] + "\n;//# sourceURL=ulla-build://" + file;
+
+          ret.push(
+            `/* ${JSON.stringify(file)} */\neval(${JSON.stringify(code)})`
+          );
+        }
+
+        compiled = ret.join("\n");
       }
 
-      compiled = ret.join("\n");
-    }
+      ensureDirectoriesExist(dirname(o.name));
 
-    ensureDirectoriesExist(dirname(o.name));
+      fs.writeFileSync(o.name, compiled, "utf8");
 
-    fs.writeFileSync(o.name, compiled, "utf8");
+      console.log("> Validating runtime...");
 
-    console.log("> Validating runtime...");
+      if (WATCH) {
+        const script = testScript(compiled);
 
-    if (WATCH) {
-      const script = testScript(compiled);
+        script
+          .then(() => {
+            console.log("> Validation OK");
+          })
+          .catch((e) => {
+            console.log("! Validation error: " + e.message);
+          });
 
-      script
-        .then(() => {
-          console.log("> Validation OK");
-        })
-        .catch((e) => {
-          console.log("! Validation error: " + e.message);
-        });
+        await script;
 
-      await script;
-
-      console.log("\nThe compiler is watching file changes...\n");
-    } else {
-      await testScript(compiled);
+        console.log("\nThe compiler is watching file changes...\n");
+      } else {
+        await testScript(compiled);
+      }
     }
   }
 }
@@ -345,6 +342,7 @@ function getConfiguration(
   const libs: string[] = [];
 
   const ullaLibs = packageJson.ulla?.libs;
+
   if (ullaLibs) {
     if (ullaLibs instanceof Array) {
       ullaLibs.forEach(($, ix) => {
@@ -363,6 +361,11 @@ function getConfiguration(
       );
       hasError = true;
     }
+  } else {
+    console.error(`! Notice: injecting AMD & ECS libraries.`);
+
+    libs.push(process.env.ECS_PATH || "ulla-ecs/dist/src/index.js");
+    libs.push(process.env.AMD_PATH || "ulla-ecs/artifacts/amd.js");
   }
 
   if (hasError) {
