@@ -4,9 +4,6 @@
   "description": "",
   "main": "dist/src/index.js",
   "typings": "dist/index.d.ts",
-  "bin": {
-    "ulla-builder": "artifacts/ulla-builder.js"
-  },
   "scripts": {},
   "keywords": [],
   "tsdoc": {
@@ -23,10 +20,6 @@
     "docs-yaml",
     "artifacts"
   ],
-  "dependencies": {
-    "typescript": "^3.8.3",
-    "terser": "^4.6.10",
-    "isolated-vm": "^3.3.0"
-  },
+  "dependencies": {},
   "devDependencies": {}
 }

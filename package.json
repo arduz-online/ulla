@@ -2,9 +2,6 @@
   "name": "ulla-ecs",
   "version": "1.0.0",
   "description": "",
-  "bin": {
-    "ulla-builder": "artifacts/ulla-builder.js"
-  },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "npm run build && tsc -p tsconfig.json --watch"
