@@ -18,7 +18,6 @@ RPC_DEPS := packages/ulla-rpc/lib/client/index.js
 
 COMPILER_NPM_DEPENDENCIES := packages/ulla-compiler/package.json packages/ulla-compiler/tsconfig.json packages/ulla-compiler/bin.ts
 
-NPM_PUBLISH_SCRIPT := scripts/npmPublish.js
 BUILD_ECS_SCRIPT := scripts/buildEcsTypes.js
 DIST_SCRIPT := scripts/prepareDist.js
 
@@ -94,11 +93,7 @@ build: lib $(BUILD_ECS) $(RPC_DEPS) $(AMD_DEP) $(COMPILER) $(ECS_COMPILED_FILES_
 	@cd $(PWD)/packages/ulla-compiler; npm link
 	@cd $(PWD)/packages/ulla-rpc; npm link
 
-publish: clean build example $(NPM_PUBLISH_SCRIPT) ## Release a new version, using the `scripts/npmPublish` script
-	@cd $(PWD)/packages/ulla-ecs; $(NODE) $(PWD)/scripts/npmPublish.js
-	@cd $(PWD)/packages/ulla-compiler; $(NODE) $(PWD)/scripts/npmPublish.js
-	@cd $(PWD)/packages/ulla-rpc; $(NODE) $(PWD)/scripts/npmPublish.js
-	@cd $(PWD)/packages/ulla-builder; $(NODE) $(PWD)/scripts/npmPublish.js
+pre-publish: clean build example
 
 .PHONY: clean lib
 
