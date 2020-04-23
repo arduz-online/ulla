@@ -10,7 +10,7 @@
     "emitDecoratorMetadata": true,
     "declaration": false,
     "downlevelIteration": true,
-    "keyofStringsOnly": true
+    "keyofStringsOnly": false
   },
   "includes": "*.ts"
 }

@@ -121,40 +121,22 @@ function minify(files: string | string[] | { [file: string]: string }) {
     ecma: 2020,
     warnings: true,
     nameCache,
-    mangle: PRODUCTION
-      ? {
-          toplevel: false,
-          module: false,
-          keep_classnames: true,
-          keep_fnames: true,
-          reserved: ["global", "define"],
-        }
-      : false,
-    compress: PRODUCTION
-      ? {
-          passes: 2,
-        }
-      : false,
-    output: PRODUCTION
-      ? {
-          comments: /^!/,
-          beautify: false,
-        }
-      : {
-          source_map: {
-            includeSources: true,
-            content: "inline",
-            url: "inline",
-          },
-          beautify: true,
-        },
-    sourceMap: PRODUCTION
-      ? false
-      : {
-          includeSources: true,
-          content: "inline",
-          url: "inline",
-        },
+    mangle: {
+      toplevel: false,
+      module: false,
+      eval: true,
+      keep_classnames: true,
+      keep_fnames: true,
+      reserved: ["global", "define"],
+    },
+    compress: {
+      passes: 2,
+    },
+    output: {
+      comments: /^!/,
+      beautify: false,
+    },
+    sourceMap: false,
     toplevel: false,
   });
 
@@ -178,8 +160,6 @@ async function emitFile(
 ) {
   let output = services.getEmitOutput(fileName);
 
-  if (WATCH) console.log("\u001b[2J\u001b[0;0H");
-
   if (!output.emitSkipped) {
     console.log(
       `> Processing ${fileName.replace(ts.sys.getCurrentDirectory(), "")}`
@@ -195,55 +175,143 @@ async function emitFile(
 
   logErrors(services);
 
-  const loadedMap = libs.reduce((acc, lib) => {
-    const normalizedPath = relative(ts.sys.getCurrentDirectory(), lib);
-    acc[normalizedPath] = loadArtifact(lib);
-    return acc;
-  }, {});
+  type OutFile = {
+    readonly path: string;
+    definition?: {
+      path: string;
+      content: string;
+    };
+    content?: string;
+  };
+
+  const loadedLibs: OutFile[] = [];
+
+  function loadUllaLib(lib: string) {
+    const path = resolveFile(lib);
+
+    if (path) {
+      const json: OutFile[] = JSON.parse(loadArtifact(lib));
+      loadedLibs.push(...json);
+      return true;
+    }
+
+    return false;
+  }
+
+  function loadJsLib(lib: string) {
+    const path = resolveFile(lib);
+
+    if (path) {
+      loadedLibs.push({
+        path: relative(ts.sys.getCurrentDirectory(), path),
+        content: loadArtifact(lib),
+      });
+      return true;
+    }
+
+    return false;
+  }
+
+  function loadLibOrJs(lib: string) {
+    return loadUllaLib(lib + ".lib") || loadJsLib(lib) || false;
+  }
+
+  libs.forEach((lib) => {
+    if (!loadLibOrJs(lib)) {
+      console.error(`! Error: could not load lib: ${lib}`);
+    }
+  });
+
+  const out = new Map<string, OutFile>();
+
+  function getOutFile(path: string) {
+    let f: OutFile = out.get(path);
+    if (!f) {
+      f = { path };
+      out.set(path, f);
+    }
+    return f;
+  }
+
+  function normalizePath(path: string) {
+    return path.replace(ts.sys.getCurrentDirectory(), "");
+  }
 
   for (let o of output.outputFiles) {
-    console.log(
-      `> Emitting ${o.name.replace(ts.sys.getCurrentDirectory(), "")}`
-    );
-
     if (o.name.endsWith(".d.ts")) {
-      ensureDirectoriesExist(dirname(o.name));
-      fs.writeFileSync(o.name, o.text, "utf8");
-    } else {
-      let compiled: string;
+      const filePath = o.name.replace(/\.d\.ts$/, ".js");
+      const f = getOutFile(filePath);
 
-      const files = {
-        ...loadedMap,
-        [relative(ts.sys.getCurrentDirectory(), fileName)]: o.text,
+      f.definition = {
+        content: o.text,
+        path: o.name,
       };
+    } else {
+      const f = getOutFile(o.name);
+      f.content = o.text;
+    }
+  }
 
-      if (PRODUCTION) {
-        compiled = minify(files).code;
-      } else {
-        const ret: string[] = [];
+  for (let [, file] of out) {
+    if (
+      file.path.endsWith(".js") &&
+      file.content &&
+      !file.path.endsWith(".min.js")
+    ) {
+      loadedLibs.push({
+        path: relative(ts.sys.getCurrentDirectory(), fileName),
+        content: file.content,
+      });
 
-        for (let file in files) {
-          // minify only to show errors
-          minify(files[file] as string);
+      const ret: string[] = [];
 
-          const code = files[file] + "\n;//# sourceURL=ulla-build://" + file;
+      for (let { path, content } of loadedLibs) {
+        const code = content + "\n//# sourceURL=ulla-build:///" + path;
 
-          ret.push(
-            `/* ${JSON.stringify(file)} */\neval(${JSON.stringify(code)})`
-          );
-        }
-
-        compiled = ret.join("\n");
+        ret.push(`/* ${JSON.stringify(path)} */ eval(${JSON.stringify(code)})`);
       }
 
-      ensureDirectoriesExist(dirname(o.name));
+      file.content = ret.join("\n");
 
-      fs.writeFileSync(o.name, compiled, "utf8");
+      {
+        // deps
+        const deps = getOutFile(file.path + ".lib");
+        deps.content = JSON.stringify(loadedLibs, null, 2);
+      }
 
-      console.log("> Validating runtime...");
+      {
+        // minify && map
+        const minifiedFile = getOutFile(file.path.replace(/\.js$/, ".min.js"));
+        console.log(`> preparing ${normalizePath(minifiedFile.path)}`);
 
+        const m = minify(loadedLibs.map(($) => $.content).join(";\n"));
+        minifiedFile.content = m.code;
+
+        if (m.map) {
+          const f = getOutFile(file.path.replace(/\.js$/, ".js.map"));
+          f.content = typeof m.map === "string" ? m.map : JSON.stringify(m.map);
+        }
+      }
+    }
+  }
+
+  for (let [, file] of out) {
+    ensureDirectoriesExist(dirname(file.path));
+    if (file.content) {
+      console.log(`> writing ${normalizePath(file.path)}`);
+      fs.writeFileSync(file.path, file.content, "utf8");
+    }
+    if (file.definition) {
+      console.log(`> writing ${normalizePath(file.definition.path)}`);
+      fs.writeFileSync(file.definition.path, file.definition.content, "utf8");
+    }
+  }
+
+  console.log("> Validating runtimes...");
+  for (let [, file] of out) {
+    if (file.path.endsWith(".js") && file.content) {
       if (WATCH) {
-        const script = testScript(compiled);
+        const script = testScript(file.content);
 
         script
           .then(() => {
@@ -254,12 +322,13 @@ async function emitFile(
           });
 
         await script;
-
-        console.log("\nThe compiler is watching file changes...\n");
       } else {
-        await testScript(compiled);
+        await testScript(file.content);
       }
     }
+  }
+  if (WATCH) {
+    console.log("\nThe compiler is watching file changes...\n");
   }
 }
 
@@ -302,7 +371,9 @@ function getConfiguration(
   let hasError = false;
 
   if (tsconfig.options.module !== ts.ModuleKind.AMD) {
-    console.error("! Error: tsconfig.json: ulla-builder only allows AMD modules");
+    console.error(
+      "! Error: tsconfig.json: ulla-builder only allows AMD modules"
+    );
     hasError = true;
   }
 
@@ -369,12 +440,11 @@ function getConfiguration(
     process.exit(1);
   }
 
-  if (!PRODUCTION) {
-    tsconfig.options.inlineSourceMap = true;
-    tsconfig.options.inlineSources = true;
-    tsconfig.options.sourceMap = false;
-    tsconfig.options.sourceRoot = ts.sys.getCurrentDirectory();
-  }
+  tsconfig.options.inlineSourceMap = true;
+  tsconfig.options.inlineSources = true;
+  tsconfig.options.sourceMap = false;
+  tsconfig.options.removeComments = false;
+  tsconfig.options.sourceRoot = ts.sys.getCurrentDirectory();
 
   return Object.assign(tsconfig, { libs });
 }
@@ -396,28 +466,36 @@ function printDiagnostic(diagnostic: ts.Diagnostic) {
   }
 }
 
+function resolveFile(path: string): string | null {
+  if (ts.sys.fileExists(path)) {
+    return path;
+  }
+
+  let ecsPackageAMD = "node_modules/" + path;
+
+  if (ts.sys.fileExists(ecsPackageAMD)) {
+    return ecsPackageAMD;
+  }
+
+  ecsPackageAMD = "../node_modules/" + path;
+
+  if (ts.sys.fileExists(ecsPackageAMD)) {
+    return ecsPackageAMD;
+  }
+
+  ecsPackageAMD = "../../node_modules/" + path;
+
+  if (ts.sys.fileExists(ecsPackageAMD)) {
+    return ecsPackageAMD;
+  }
+  return null;
+}
+
 function loadArtifact(path: string): string {
   try {
-    if (ts.sys.fileExists(path)) {
-      return ts.sys.readFile(path);
-    }
-
-    let ecsPackageAMD = "node_modules/" + path;
-
-    if (ts.sys.fileExists(ecsPackageAMD)) {
-      return ts.sys.readFile(ecsPackageAMD);
-    }
-
-    ecsPackageAMD = "../node_modules/" + path;
-
-    if (ts.sys.fileExists(ecsPackageAMD)) {
-      return ts.sys.readFile(ecsPackageAMD);
-    }
-
-    ecsPackageAMD = "../../node_modules/" + path;
-
-    if (ts.sys.fileExists(ecsPackageAMD)) {
-      return ts.sys.readFile(ecsPackageAMD);
+    const resolved = resolveFile(path);
+    if (resolved) {
+      return ts.sys.readFile(resolved);
     }
 
     throw new Error();

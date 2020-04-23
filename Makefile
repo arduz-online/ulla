@@ -92,6 +92,7 @@ build: lib $(BUILD_ECS) $(RPC_DEPS) $(AMD_DEP) $(COMPILER) $(ECS_COMPILED_FILES_
 	@cd $(PWD)/packages/ulla-ecs; npm link
 	@cd $(PWD)/packages/ulla-compiler; npm link
 	@cd $(PWD)/packages/ulla-rpc; npm link
+	@cd $(PWD)/packages/ulla-builder; npm link
 
 pre-publish: clean build example
 
