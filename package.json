@@ -31,7 +31,7 @@
     "fp-future": "^1.0.1",
     "git-rev-sync": "^2.0.0",
     "glob": "^7.1.6",
-    "isolated-vm": "^3.3.0",
+    "isolated-vm": "^4.3.7",
     "istanbul-instrumenter-loader": "^3.0.1",
     "mocha": "^7.1.1",
     "node-fetch": "^2.6.0",
