@@ -27,7 +27,7 @@
     "@types/mocha": "^7.0.2",
     "@types/ws": "^7.2.3",
     "expect": "^25.2.7",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "fp-future": "^1.0.1",
     "git-rev-sync": "^2.0.0",
     "glob": "^7.1.6",
